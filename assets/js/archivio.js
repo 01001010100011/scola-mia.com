@@ -5,14 +5,23 @@ const searchInput = document.getElementById("archiveSearchInput");
 const allEl = document.getElementById("allArticles");
 let publishedArticles = [];
 
+function shortDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "data non disponibile" : date.toLocaleDateString("it-IT");
+}
+
 function card(article) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
+  const publishedShort = shortDate(article.created_at || article.updated_at);
   return `
     <article class="border-2 border-black bg-white p-4 shadow-brutal h-full flex flex-col">
       <div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden bg-slate-100 flex items-center justify-center">
         ${article.image_url
           ? `<img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" />`
-          : '<span class="text-[11px] uppercase font-bold text-slate-500">Nessuna immagine</span>'}
+          : `<div class="text-center px-3">
+              <p class="text-[11px] uppercase font-bold text-slate-600">Articolo del ${publishedShort}</p>
+              <p class="mt-1 headline text-xl text-accent">scolamia.it</p>
+            </div>`}
       </div>
       <p class="text-xs font-bold uppercase text-accent">${article.category}</p>
       <h3 class="mt-2 text-lg font-semibold">${article.title}</h3>
