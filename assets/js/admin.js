@@ -1,6 +1,7 @@
 import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js";
 
 const BUCKET = "article-media";
+const REQUIRE_LOGIN_ON_EACH_VISIT = true;
 
 const loginBox = document.getElementById("loginBox");
 const adminPanel = document.getElementById("adminPanel");
@@ -812,8 +813,21 @@ supabase.auth.onAuthStateChange(() => {
   });
 });
 
-renderAttachmentList();
-handleAuthUi().catch((error) => {
+async function bootstrapAdmin() {
+  renderAttachmentList();
+
+  if (REQUIRE_LOGIN_ON_EACH_VISIT) {
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  await handleAuthUi();
+}
+
+bootstrapAdmin().catch((error) => {
   console.error(error);
   setLoginError("Errore inizializzazione admin.");
 });

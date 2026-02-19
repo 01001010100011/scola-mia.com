@@ -4,6 +4,7 @@
 - Create a Supabase project.
 - Open SQL Editor and run `supabase/schema.sql`.
 - If you migrated from old local/static agenda data, run `supabase/maintenance_fix_agenda_events.sql` once to normalize legacy events.
+- Run `supabase/security_hardening_admin.sql` to enforce authenticated-only admin write access.
 
 ## 2. Create admin user
 - In Authentication > Users, create an admin email/password user.
