@@ -1,17 +1,23 @@
 import { getPublishedArticles } from "./public-api.js";
+import { formatLocalDate } from "./supabase-client.js";
 
 const searchInput = document.getElementById("archiveSearchInput");
 const allEl = document.getElementById("allArticles");
 let publishedArticles = [];
 
 function card(article) {
+  const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
   return `
-    <article class="border-2 border-black bg-white p-4 shadow-brutal">
-      ${article.image_url ? `<div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" /></div>` : ""}
+    <article class="border-2 border-black bg-white p-4 shadow-brutal h-full flex flex-col">
+      <div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden bg-slate-100 flex items-center justify-center">
+        ${article.image_url
+          ? `<img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" />`
+          : '<span class="text-[11px] uppercase font-bold text-slate-500">Nessuna immagine</span>'}
+      </div>
       <p class="text-xs font-bold uppercase text-accent">${article.category}</p>
       <h3 class="mt-2 text-lg font-semibold">${article.title}</h3>
-      <p class="mt-2 text-sm">${article.excerpt}</p>
-      <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">Aggiornato: ${new Date(article.updated_at).toLocaleDateString("it-IT")}</p>
+      ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
+      <p class="mt-2 text-sm flex-1">${article.excerpt}</p>
       <a href="article.html?id=${encodeURIComponent(article.id)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Leggi</a>
     </article>
   `;
