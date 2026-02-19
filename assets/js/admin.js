@@ -6,6 +6,7 @@ const loginBox = document.getElementById("loginBox");
 const adminPanel = document.getElementById("adminPanel");
 const loginForm = document.getElementById("loginForm");
 const loginError = document.getElementById("loginError");
+const adminStatus = document.getElementById("adminStatus");
 
 const articleForm = document.getElementById("articleForm");
 const adminArticles = document.getElementById("adminArticles");
@@ -42,6 +43,35 @@ let currentArticleImageUrl = "";
 let currentArticleImagePath = "";
 let currentArticleImageFile = null;
 let currentArticleAttachments = [];
+
+function setLoginError(message = "") {
+  if (!message) {
+    loginError.classList.add("hidden");
+    return;
+  }
+  loginError.textContent = message;
+  loginError.classList.remove("hidden");
+}
+
+function setAdminStatus(message = "") {
+  if (!adminStatus) return;
+  if (!message) {
+    adminStatus.classList.add("hidden");
+    adminStatus.textContent = "";
+    return;
+  }
+  adminStatus.textContent = message;
+  adminStatus.classList.remove("hidden");
+}
+
+function authErrorMessage(error) {
+  const raw = (error?.message || "").toLowerCase();
+  if (raw.includes("email not confirmed")) return "Email non confermata. Conferma la mail dell'admin in Supabase Auth.";
+  if (raw.includes("invalid login credentials")) return "Credenziali non valide.";
+  if (raw.includes("network")) return "Errore di rete. Controlla connessione e riprova.";
+  if (raw.includes("captcha")) return "Richiesta bloccata dal controllo di sicurezza (captcha).";
+  return error?.message || "Errore durante l'accesso.";
+}
 
 function normalizeAgendaDateInput(value) {
   if (!value) return "";
@@ -372,11 +402,16 @@ async function uploadToStorage(articleId, file, kind) {
 }
 
 async function handleAuthUi() {
-  const { data } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
   const isAuth = Boolean(data?.session);
 
   loginBox.classList.toggle("hidden", isAuth);
   adminPanel.classList.toggle("hidden", !isAuth);
+  if (!isAuth) {
+    setAdminStatus("");
+    setLoginError("");
+  }
 
   if (!isAuth) {
     setContentSection("articles");
@@ -384,28 +419,49 @@ async function handleAuthUi() {
     return false;
   }
 
-  await loadData();
-  renderAdminArticles();
-  renderFeaturedManager();
-  renderAdminAgendaEvents();
+  try {
+    await loadData();
+    renderAdminArticles();
+    renderFeaturedManager();
+    renderAdminAgendaEvents();
+    setAdminStatus("");
+  } catch (error) {
+    console.error(error);
+    setAdminStatus("Login riuscito, ma errore nel caricamento dati admin (controlla schema/policy Supabase).");
+  }
+
   return true;
 }
 
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  loginError.classList.add("hidden");
+  setLoginError("");
 
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
-
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    loginError.textContent = "Credenziali non valide.";
-    loginError.classList.remove("hidden");
-    return;
+  const submitBtn = loginForm.querySelector("button[type='submit']");
+  if (submitBtn instanceof HTMLButtonElement) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Accesso...";
   }
 
-  await handleAuthUi();
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoginError(authErrorMessage(error));
+      return;
+    }
+
+    await handleAuthUi();
+  } catch (error) {
+    console.error(error);
+    setLoginError(authErrorMessage(error));
+  } finally {
+    if (submitBtn instanceof HTMLButtonElement) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Accedi";
+    }
+  }
 });
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -749,9 +805,15 @@ featuredManagerList.addEventListener("dragend", () => {
   featuredManagerList.querySelectorAll("[data-drag-id]").forEach((item) => item.classList.remove("opacity-60", "ring-2", "ring-accent"));
 });
 
-supabase.auth.onAuthStateChange(async () => {
-  await handleAuthUi();
+supabase.auth.onAuthStateChange(() => {
+  handleAuthUi().catch((error) => {
+    console.error(error);
+    setLoginError("Errore sincronizzazione sessione.");
+  });
 });
 
-await handleAuthUi();
 renderAttachmentList();
+handleAuthUi().catch((error) => {
+  console.error(error);
+  setLoginError("Errore inizializzazione admin.");
+});
