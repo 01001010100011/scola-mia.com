@@ -39,13 +39,32 @@
         </div>
       </a>
       <nav class="hidden md:flex items-center gap-6 text-sm font-bold uppercase">
+        <a href="index.html" class="hover:text-accent">Home</a>
         <a href="archivio.html" class="hover:text-accent">Articoli</a>
         <a href="agenda.html" class="hover:text-accent">Agenda</a>
         <a href="contatti.html" class="text-accent">Contatti</a>
       </nav>
-      <div></div>
+      <button id="mobileMenuBtn" type="button" class="md:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri menu" aria-controls="mobileMenuBackdrop" aria-expanded="false">
+        <span class="material-symbols-outlined block">menu</span>
+      </button>
     </div>
   </header>
+  <div id="mobileMenuBackdrop" class="fixed inset-0 z-[70] hidden md:hidden bg-black/50">
+    <aside id="mobileMenuDrawer" class="ml-auto h-full w-[84%] max-w-xs border-l-4 border-black bg-paper p-5 transform translate-x-full transition-transform duration-200 ease-out">
+      <div class="flex items-center justify-between">
+        <p class="headline text-4xl">Menu</p>
+        <button id="mobileMenuCloseBtn" type="button" class="border-2 border-black bg-white p-1.5" aria-label="Chiudi menu">
+          <span class="material-symbols-outlined block">close</span>
+        </button>
+      </div>
+      <nav class="mt-6 grid gap-2 text-xs font-bold uppercase">
+        <a href="index.html" class="border-2 border-black bg-white px-3 py-2">Home</a>
+        <a href="archivio.html" class="border-2 border-black bg-white px-3 py-2">Archivio</a>
+        <a href="agenda.html" class="border-2 border-black bg-white px-3 py-2">Agenda</a>
+        <a href="contatti.html" class="border-2 border-black bg-white px-3 py-2">Contatti</a>
+      </nav>
+    </aside>
+  </div>
 
   <main class="max-w-5xl mx-auto px-4 md:px-8 py-8">
     <section class="border-4 border-black bg-white p-6 md:p-8 shadow-brutal">
@@ -72,5 +91,6 @@
       </div>
     </section>
   </main>
+  <script type="module" src="assets/js/mobile-nav.js"></script>
 </body>
 </html>
