@@ -63,25 +63,25 @@
             <p data-page-label class="text-xs font-semibold uppercase tracking-wider">Home</p>
           </div>
         </a>
-        <nav class="hidden md:flex items-center gap-6 text-sm font-bold uppercase">
+        <nav class="hidden lg:flex items-center gap-6 text-sm font-bold uppercase">
           <a href="index.html" class="hover:text-accent">Home</a>
           <a href="archivio.html" class="hover:text-accent">Articoli</a>
           <a href="agenda.html" class="hover:text-accent">Agenda</a>
           <a href="contatti.html" class="hover:text-accent">Contatti</a>
         </nav>
-        <div class="flex items-center gap-2">
-          <form id="homeSearchForm" class="flex items-center border-2 border-black bg-white">
+        <div class="flex items-center justify-end min-w-[44px] gap-2">
+          <form id="homeSearchForm" class="hidden lg:flex items-center border-2 border-black bg-white">
             <span class="material-symbols-outlined text-base px-2">search</span>
             <input id="homeSearchInput" type="search" placeholder="Cerca ovunque" class="border-0 focus:ring-0 text-xs font-semibold py-2 w-32 md:w-44" />
           </form>
-          <button id="mobileMenuBtn" type="button" class="md:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri menu" aria-controls="mobileMenuBackdrop" aria-expanded="false">
+          <button id="mobileMenuBtn" type="button" class="lg:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri menu" aria-controls="mobileMenuBackdrop" aria-expanded="false">
             <span class="material-symbols-outlined block">menu</span>
           </button>
         </div>
       </div>
     </header>
 
-    <div id="mobileMenuBackdrop" class="fixed inset-0 z-[70] hidden md:hidden bg-black/50">
+    <div id="mobileMenuBackdrop" class="fixed inset-0 z-[70] hidden lg:hidden bg-black/50">
       <aside id="mobileMenuDrawer" class="ml-auto h-full w-[84%] max-w-xs border-l-4 border-black bg-paper p-5 transform translate-x-full transition-transform duration-200 ease-out">
         <div class="flex items-center justify-between">
           <p class="headline text-4xl">Menu</p>

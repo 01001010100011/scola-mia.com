@@ -29,5 +29,5 @@ mobileMenuBackdrop?.addEventListener("click", (event) => {
   if (event.target === mobileMenuBackdrop) closeMobileMenu();
 });
 window.addEventListener("resize", () => {
-  if (window.innerWidth >= 768) closeMobileMenu();
+  if (window.innerWidth >= 1024) closeMobileMenu();
 });
