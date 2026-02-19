@@ -6,11 +6,13 @@ const featured = document.getElementById("featuredArticles");
 const homeAgendaGrid = document.getElementById("homeAgendaGrid");
 
 function articleCard(article) {
+  const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
   return `
     <article class="border-2 border-black bg-white p-5 shadow-brutal lift transition-all">
       ${article.image_url ? `<div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" /></div>` : ""}
       <p class="text-xs font-bold uppercase text-accent">${article.category}</p>
       <h3 class="mt-2 text-xl font-semibold">${article.title}</h3>
+      ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
       <p class="mt-2 text-sm">${article.excerpt}</p>
       <a class="inline-block mt-4 text-xs font-bold uppercase underline" href="article.html?id=${encodeURIComponent(article.id)}">Leggi</a>
     </article>

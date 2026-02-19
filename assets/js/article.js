@@ -1,5 +1,5 @@
 import { getArticleById } from "./public-api.js";
-import { escapeHtml, supabase } from "./supabase-client.js";
+import { escapeHtml, formatLocalDate, supabase } from "./supabase-client.js";
 
 const container = document.getElementById("articleContainer");
 
@@ -11,11 +11,13 @@ async function isAuthenticated() {
 function renderArticle(article) {
   const safeText = escapeHtml(article.content).replaceAll("\n", "<br>");
   const attachments = Array.isArray(article.attachments) ? article.attachments : [];
+  const publishedAt = article.created_at || article.updated_at;
+  const publishedLabel = formatLocalDate(publishedAt);
 
   container.innerHTML = `
     <p class="text-xs uppercase font-bold text-accent">${escapeHtml(article.category)}</p>
     <h1 class="headline text-6xl mt-2">${escapeHtml(article.title)}</h1>
-    <p class="mt-4 text-sm">${escapeHtml(article.excerpt)}</p>
+    ${publishedLabel ? `<p class="mt-2 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
     ${article.image_url ? `<div class="mt-6 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${article.image_url}" alt="${escapeHtml(article.title)}" class="w-full h-full object-cover" /></div>` : ""}
     <div class="mt-8 pt-6 border-t-2 border-black prose max-w-none prose-p:leading-7">
       <p>${safeText}</p>
