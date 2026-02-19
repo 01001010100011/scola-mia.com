@@ -28,7 +28,7 @@
 </head>
 <body class="text-ink" data-page-title="Articoli">
   <header class="sticky top-0 z-50 bg-paper border-b-4 border-black">
-    <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 relative flex items-center justify-between gap-3">
+    <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
       <a href="index.html" class="flex items-center gap-3">
         <div class="border-2 border-black bg-accent p-1.5">
           <span class="material-symbols-outlined text-white block">school</span>
@@ -38,15 +38,17 @@
           <p data-page-label class="text-xs font-semibold uppercase tracking-wider">Articoli</p>
         </div>
       </a>
-      <nav class="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-6 text-sm font-bold uppercase z-10">
+      <nav class="hidden lg:flex items-center gap-6 text-sm font-bold uppercase justify-self-center">
         <a href="index.html" class="hover:text-accent">Home</a>
         <a href="archivio.html" class="text-accent">Articoli</a>
         <a href="agenda.html" class="hover:text-accent">Agenda</a>
         <a href="contatti.html" class="hover:text-accent">Contatti</a>
       </nav>
-      <button id="mobileMenuBtn" type="button" class="lg:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri menu" aria-controls="mobileMenuBackdrop" aria-expanded="false">
-        <span class="material-symbols-outlined block">menu</span>
-      </button>
+      <div class="justify-self-end flex items-center justify-end min-w-[44px]">
+        <button id="mobileMenuBtn" type="button" class="lg:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri menu" aria-controls="mobileMenuBackdrop" aria-expanded="false">
+          <span class="material-symbols-outlined block">menu</span>
+        </button>
+      </div>
     </div>
   </header>
   <div id="mobileMenuBackdrop" class="fixed inset-0 z-[70] hidden lg:hidden bg-black/50">
