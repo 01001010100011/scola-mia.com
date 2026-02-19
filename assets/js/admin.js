@@ -160,6 +160,18 @@ function sanitizeFeaturedIds() {
   featuredIds = featuredIds.filter((id) => valid.has(id));
 }
 
+function getAutoFeaturedIds() {
+  return articles
+    .filter((item) => item.published)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .map((item) => item.id)
+    .slice(0, 3);
+}
+
+function getEffectiveFeaturedIds() {
+  return featuredIds.length ? [...featuredIds] : getAutoFeaturedIds();
+}
+
 function formatBytes(bytes) {
   if (!bytes) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
@@ -278,14 +290,16 @@ function renderAdminArticles() {
 
 function renderFeaturedManager() {
   const published = articles.filter((item) => item.published);
+  const effectiveFeaturedIds = getEffectiveFeaturedIds();
+  const usingAutoFallback = featuredIds.length === 0;
 
   if (!published.length) {
     featuredManagerList.innerHTML = '<p class="text-sm">Non ci sono articoli pubblicati da mettere in evidenza.</p>';
     return;
   }
 
-  const featuredSet = new Set(featuredIds);
-  const featuredArticles = featuredIds.map((id) => published.find((item) => item.id === id)).filter(Boolean);
+  const featuredSet = new Set(effectiveFeaturedIds);
+  const featuredArticles = effectiveFeaturedIds.map((id) => published.find((item) => item.id === id)).filter(Boolean);
 
   const orderHtml = featuredArticles.length
     ? featuredArticles.map((article, index) => `
@@ -294,7 +308,7 @@ function renderFeaturedManager() {
           <div>
             <p class="text-xs uppercase font-bold text-accent">${escapeHtml(article.category)}</p>
             <h4 class="font-semibold">${escapeHtml(article.title)}</h4>
-            <p class="text-xs mt-1 text-amber-700">★ In evidenza #${index + 1}</p>
+            <p class="text-xs mt-1 text-amber-700">★ In evidenza #${index + 1}${usingAutoFallback ? " (auto recenti)" : ""}</p>
           </div>
           <button data-feature-action="remove" data-id="${article.id}" class="border-2 border-black px-2 py-1 text-[10px] font-bold uppercase bg-white">Rimuovi</button>
         </div>
@@ -322,6 +336,7 @@ function renderFeaturedManager() {
     <div class="grid lg:grid-cols-2 gap-4">
       <section class="border-2 border-black p-4">
         <h4 class="text-xs font-bold uppercase mb-2">Ordine in evidenza (drag & drop)</h4>
+        <p class="text-[11px] text-slate-600 mb-2">${usingAutoFallback ? "Nessuna evidenza manuale salvata: qui vedi il fallback automatico dei 3 articoli piu recenti." : "Stai gestendo l'ordine manuale degli articoli in evidenza."}</p>
         <div id="featuredOrderList" class="space-y-2">${orderHtml}</div>
       </section>
       <section class="border-2 border-black p-4">
@@ -732,9 +747,11 @@ featuredManagerList.addEventListener("click", async (event) => {
   const isPublished = articles.some((item) => item.id === id && item.published);
   if (!isPublished) return;
 
-  const index = featuredIds.indexOf(id);
-  if (action === "add" && index === -1) featuredIds.push(id);
-  if (action === "remove" && index >= 0) featuredIds.splice(index, 1);
+  const working = getEffectiveFeaturedIds();
+  const index = working.indexOf(id);
+  if (action === "add" && index === -1) working.push(id);
+  if (action === "remove" && index >= 0) working.splice(index, 1);
+  featuredIds = working;
 
   try {
     await upsertFeaturedIds();
@@ -747,11 +764,12 @@ featuredManagerList.addEventListener("click", async (event) => {
 
 function reorderFeaturedByDrag(fromId, toId) {
   if (!fromId || !toId || fromId === toId) return;
-  const from = featuredIds.indexOf(fromId);
-  const to = featuredIds.indexOf(toId);
+  const working = getEffectiveFeaturedIds();
+  const from = working.indexOf(fromId);
+  const to = working.indexOf(toId);
   if (from < 0 || to < 0) return;
 
-  const copy = [...featuredIds];
+  const copy = [...working];
   const [moved] = copy.splice(from, 1);
   copy.splice(to, 0, moved);
   featuredIds = copy;
