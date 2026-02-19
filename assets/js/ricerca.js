@@ -1,0 +1,88 @@
+import { CONTACTS, dateTokens, getAgendaEvents, getPublishedArticles, queryMatches } from "./public-api.js";
+import { formatLocalDate } from "./supabase-client.js";
+
+const articleResultsEl = document.getElementById("articleResults");
+const agendaResultsEl = document.getElementById("agendaResults");
+const contactResultsEl = document.getElementById("contactResults");
+const searchInput = document.getElementById("searchInput");
+
+let articles = [];
+let events = [];
+
+function render(query = "") {
+  const q = query.trim();
+
+  const articleResults = articles.filter((item) =>
+    !q || queryMatches(`${item.title} ${item.category} ${item.excerpt} ${item.content} ${dateTokens(item.created_at)} ${dateTokens(item.updated_at)}`, q)
+  );
+
+  const agendaResults = events.filter((item) =>
+    !q || queryMatches(`${item.title} ${item.category} ${item.description} ${dateTokens(item.date)}`, q)
+  );
+
+  const contactResults = CONTACTS.filter((item) =>
+    !q || queryMatches(`${item.label} ${item.value}`, q)
+  );
+
+  articleResultsEl.innerHTML = articleResults.length
+    ? articleResults.map((item) => `
+        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+          ${item.image_url ? `<div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${item.image_url}" alt="Immagine ${item.title}" class="w-full h-full object-cover" /></div>` : ""}
+          <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
+          <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
+          <p class="mt-2 text-sm">${item.excerpt}</p>
+          <a href="article.html?id=${encodeURIComponent(item.id)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Apri</a>
+        </article>
+      `).join("")
+    : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun articolo trovato.</div>';
+
+  agendaResultsEl.innerHTML = agendaResults.length
+    ? agendaResults.map((item) => `
+        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+          <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
+          <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
+          <p class="mt-2 text-sm">${item.description}</p>
+          <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatLocalDate(item.date)}</p>
+          <a href="agenda.html" class="inline-block mt-3 text-xs font-bold uppercase underline">Vai agenda</a>
+        </article>
+      `).join("")
+    : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun evento trovato.</div>';
+
+  contactResultsEl.innerHTML = contactResults.length
+    ? contactResults.map((item) => `
+        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+          <p class="text-xs font-bold uppercase text-accent">${item.label}</p>
+          <a href="${item.href}" ${item.href.startsWith("http") ? 'target="_blank" rel="noreferrer"' : ""} class="mt-2 inline-block font-semibold underline">${item.value}</a>
+        </article>
+      `).join("")
+    : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun contatto trovato.</div>';
+}
+
+async function bootstrap() {
+  try {
+    [articles, events] = await Promise.all([getPublishedArticles(), getAgendaEvents()]);
+  } catch (error) {
+    console.error(error);
+    articleResultsEl.innerHTML = '<div class="md:col-span-3 border-2 border-black bg-white p-4">Errore caricamento ricerca.</div>';
+    agendaResultsEl.innerHTML = '<div class="md:col-span-3 border-2 border-black bg-white p-4">Errore caricamento ricerca.</div>';
+    contactResultsEl.innerHTML = '<div class="md:col-span-3 border-2 border-black bg-white p-4">Errore caricamento ricerca.</div>';
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const initialQuery = params.get("q") || "";
+  searchInput.value = initialQuery;
+
+  document.getElementById("searchForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = searchInput.value.trim();
+    const url = query ? `ricerca.html?q=${encodeURIComponent(query)}` : "ricerca.html";
+    history.replaceState(null, "", url);
+    render(query);
+  });
+
+  searchInput.addEventListener("input", () => render(searchInput.value));
+  render(initialQuery);
+}
+
+bootstrap();
