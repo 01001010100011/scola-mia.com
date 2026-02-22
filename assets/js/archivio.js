@@ -20,7 +20,7 @@ function card(article) {
           ? `<img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" />`
           : `<div class="text-center px-3">
               <p class="text-[11px] uppercase font-bold text-slate-600">Articolo del ${publishedShort}</p>
-              <p class="mt-1 headline text-xl text-accent">scolamia.it</p>
+              <p class="mt-1 headline text-xl text-accent">scola-mia.com</p>
             </div>`}
       </div>
       <p class="text-xs font-bold uppercase text-accent">${article.category}</p>

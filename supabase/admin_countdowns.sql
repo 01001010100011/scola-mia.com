@@ -1,4 +1,4 @@
--- Admin + Countdowns migration for ScolaMia.it
+-- Admin + Countdowns migration for scola-mia.com
 -- Run this file in Supabase SQL Editor.
 
 create extension if not exists pgcrypto;

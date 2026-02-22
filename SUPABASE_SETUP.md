@@ -1,4 +1,4 @@
-# Supabase Setup (ScolaMia.it)
+# Supabase Setup (scola-mia.com)
 
 ## 1. Create project
 - Create a Supabase project.
