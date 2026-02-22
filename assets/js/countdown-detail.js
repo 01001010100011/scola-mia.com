@@ -52,7 +52,7 @@ async function loadEvent(slug) {
 async function bootstrap() {
   const slug = new URLSearchParams(window.location.search).get("id");
   if (!slug) {
-    statusEl.textContent = "Countdown non trovato.";
+    statusEl.textContent = "Evento non trovato.";
     statusEl.classList.remove("hidden");
     valuesWrap.classList.add("hidden");
     return;
@@ -60,7 +60,7 @@ async function bootstrap() {
 
   const event = await loadEvent(slug);
   if (!event) {
-    statusEl.textContent = "Countdown non trovato.";
+    statusEl.textContent = "Evento non trovato.";
     statusEl.classList.remove("hidden");
     valuesWrap.classList.add("hidden");
     return;
@@ -74,4 +74,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-

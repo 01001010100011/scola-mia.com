@@ -62,6 +62,7 @@ export async function getCountdownEvents() {
     .from("school_events")
     .select("slug,title,target_at,featured,active")
     .eq("active", true)
+    .not("slug", "like", "fine-%")
     .gte("target_at", nowIso)
     .order("target_at", { ascending: true });
 
@@ -75,6 +76,7 @@ export async function getCountdownEventBySlug(slug) {
     .select("slug,title,target_at,featured,active")
     .eq("slug", slug)
     .eq("active", true)
+    .not("slug", "like", "fine-%")
     .limit(1)
     .maybeSingle();
 

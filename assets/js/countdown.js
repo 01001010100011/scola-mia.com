@@ -12,8 +12,7 @@ let timer = null;
 function renderCard(event, isFeatured = false) {
   return `
     <a href="countdown-detail.html?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black ${isFeatured ? "bg-black text-white p-6 md:p-8" : "bg-white p-4"} shadow-brutal lift transition-all">
-      <p class="text-xs uppercase font-bold ${isFeatured ? "text-marker" : "text-accent"}">${event.title}</p>
-      <h3 class="${isFeatured ? "headline text-5xl mt-2" : "headline text-3xl mt-2"}">${isFeatured ? "Countdown principale" : "Countdown"}</h3>
+      <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${event.title}</h3>
       <p data-countdown-value="${event.slug}" class="${isFeatured ? "mt-4 text-2xl font-bold" : "mt-3 text-lg font-bold"}">${formatCountdown(event.target_at)}</p>
       <p class="${isFeatured ? "mt-3 text-sm opacity-80" : "mt-2 text-xs uppercase font-semibold text-slate-500"}">${formatTargetDate(event.target_at)}</p>
     </a>
@@ -80,4 +79,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-

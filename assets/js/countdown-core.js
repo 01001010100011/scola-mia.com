@@ -28,13 +28,10 @@ export function formatCountdown(targetAt) {
 export function formatTargetDate(targetAt) {
   const date = toDate(targetAt);
   if (!date) return "";
-  return date.toLocaleString("it-IT", {
+  return date.toLocaleDateString("it-IT", {
     timeZone: "Europe/Rome",
-    day: "2-digit",
+    day: "numeric",
     month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
+    year: "numeric"
   });
 }
-

@@ -49,12 +49,10 @@ insert into public.school_events (slug, title, target_at, featured, active)
 values
   ('inizio-lezioni-2025', 'Inizio lezioni', '2025-09-15T00:00:00+02:00', false, true),
   ('immacolata-2025', 'Immacolata Concezione', '2025-12-08T00:00:00+01:00', false, true),
-  ('inizio-vacanze-natale-2025', 'Inizio vacanze di Natale', '2025-12-22T00:00:00+01:00', false, true),
-  ('fine-vacanze-natale-2026', 'Fine vacanze di Natale', '2026-01-06T23:59:59+01:00', false, true),
-  ('inizio-vacanze-pasquali-2026', 'Inizio vacanze pasquali', '2026-04-02T00:00:00+02:00', false, true),
-  ('fine-vacanze-pasquali-2026', 'Fine vacanze pasquali', '2026-04-07T23:59:59+02:00', false, true),
+  ('vacanze-natale-2025', 'Vacanze di Natale', '2025-12-22T00:00:00+01:00', false, true),
+  ('vacanze-pasquali-2026', 'Vacanze di Pasqua', '2026-04-02T00:00:00+02:00', false, true),
   ('festa-lavoro-2026', 'Festa del Lavoro', '2026-05-01T00:00:00+02:00', false, true),
-  ('ponte-1-giugno-2026', '1 giugno 2026', '2026-06-01T00:00:00+02:00', false, true),
+  ('primo-giugno-2026', '1 giugno', '2026-06-01T00:00:00+02:00', false, true),
   ('festa-repubblica-2026', 'Festa della Repubblica', '2026-06-02T00:00:00+02:00', false, true),
   ('termine-lezioni', 'Fine della scuola', '2026-06-08T00:00:00+02:00', true, true)
 on conflict (slug) do update
@@ -64,3 +62,7 @@ set
   featured = excluded.featured,
   active = excluded.active,
   updated_at = now();
+
+delete from public.school_events
+where slug like 'fine-%'
+   or slug in ('inizio-vacanze-natale-2025', 'inizio-vacanze-pasquali-2026', 'ponte-1-giugno-2026');
