@@ -1,6 +1,6 @@
 import { getCountdownEventBySlug } from "./public-api.js";
 import { FALLBACK_COUNTDOWN_EVENTS } from "./countdown-data.js";
-import { formatTargetDate, getRemainingParts } from "./countdown-core.js";
+import { formatTargetDate, getRemainingParts, getRemainingTotals } from "./countdown-core.js";
 
 const titleEl = document.getElementById("countdownTitle");
 const targetEl = document.getElementById("countdownTarget");
@@ -10,6 +10,10 @@ const daysEl = document.getElementById("valueDays");
 const hoursEl = document.getElementById("valueHours");
 const minutesEl = document.getElementById("valueMinutes");
 const secondsEl = document.getElementById("valueSeconds");
+const totalsWrap = document.getElementById("countdownTotals");
+const totalHoursEl = document.getElementById("totalHours");
+const totalMinutesEl = document.getElementById("totalMinutes");
+const totalSecondsEl = document.getElementById("totalSeconds");
 
 let timer = null;
 
@@ -25,10 +29,12 @@ function setExpiredState() {
   statusEl.textContent = "Evento concluso";
   statusEl.classList.remove("hidden");
   valuesWrap.classList.add("opacity-40");
+  totalsWrap.classList.add("hidden");
 }
 
 function renderTick(event) {
   const parts = getRemainingParts(event.target_at);
+  const totals = getRemainingTotals(event.target_at);
   if (!parts) {
     setExpiredState();
     return;
@@ -37,6 +43,12 @@ function renderTick(event) {
   hoursEl.textContent = String(parts.hours).padStart(2, "0");
   minutesEl.textContent = String(parts.minutes).padStart(2, "0");
   secondsEl.textContent = String(parts.seconds).padStart(2, "0");
+  if (totals) {
+    totalsWrap.classList.remove("hidden");
+    totalHoursEl.textContent = `Mancano ${totals.hoursTotal} ore`;
+    totalMinutesEl.textContent = `Mancano ${totals.minutesTotal} minuti`;
+    totalSecondsEl.textContent = `Mancano ${totals.secondsTotal} secondi`;
+  }
 }
 
 async function loadEvent(slug) {
