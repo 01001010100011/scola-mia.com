@@ -1,10 +1,10 @@
 import { supabase } from "./supabase-client.js";
 
 export const CONTACTS = [
-  { label: "Redazione studenti", value: "redazione.studenti@scola-mia.com", href: "mailto:redazione.studenti@scola-mia.com" },
-  { label: "Supporto tecnico", value: "supporto.tech@scola-mia.com", href: "mailto:supporto.tech@scola-mia.com" },
-  { label: "Segreteria", value: "segreteria@scola-mia.com", href: "mailto:segreteria@scola-mia.com" },
-  { label: "Instagram", value: "@scola_mia", href: "https://instagram.com/scola_mia" }
+  { label: "Instagram", value: "@scolamia", href: "https://www.instagram.com/scolamia/" },
+  { label: "Email info", value: "info@scola-mia.com", href: "mailto:info@scola-mia.com" },
+  { label: "Proposte articoli", value: "propostearticoli@scola-mia.com", href: "mailto:propostearticoli@scola-mia.com" },
+  { label: "Contatti admin", value: "leo@scolamia.com", href: "mailto:leo@scolamia.com" }
 ];
 
 export async function getPublishedArticles() {

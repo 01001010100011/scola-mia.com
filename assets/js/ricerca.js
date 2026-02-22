@@ -90,7 +90,7 @@ function render(query = "") {
     ? contactResults.map((item) => `
         <article class="border-2 border-black bg-white p-4 shadow-brutal">
           <p class="text-xs font-bold uppercase text-accent">${item.label}</p>
-          <a href="${item.href}" ${item.href.startsWith("http") ? 'target="_blank" rel="noreferrer"' : ""} class="mt-2 inline-block font-semibold underline">${item.value}</a>
+          <a href="${item.href}" ${item.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="mt-2 inline-block font-semibold underline">${item.value}</a>
         </article>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun contatto trovato.</div>';
