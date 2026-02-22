@@ -1,6 +1,5 @@
 import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js";
 
-const BUCKET = "article-media";
 const REQUIRE_LOGIN_ON_EACH_VISIT = true;
 
 const loginBox = document.getElementById("loginBox");
@@ -8,21 +7,6 @@ const adminPanel = document.getElementById("adminPanel");
 const loginForm = document.getElementById("loginForm");
 const loginError = document.getElementById("loginError");
 const adminStatus = document.getElementById("adminStatus");
-
-const articleForm = document.getElementById("articleForm");
-const adminArticles = document.getElementById("adminArticles");
-const featuredManagerList = document.getElementById("featuredManagerList");
-
-const articleImageInput = document.getElementById("articleImageInput");
-const articleImagePreview = document.getElementById("articleImagePreview");
-const removeArticleImageBtn = document.getElementById("removeArticleImageBtn");
-const articleAttachmentInput = document.getElementById("articleAttachmentInput");
-const articleAttachmentList = document.getElementById("articleAttachmentList");
-
-const agendaForm = document.getElementById("agendaForm");
-const adminAgendaEvents = document.getElementById("adminAgendaEvents");
-const countdownForm = document.getElementById("countdownForm");
-const adminCountdowns = document.getElementById("adminCountdowns");
 
 const articlesSection = document.getElementById("articlesSection");
 const countdownSection = document.getElementById("countdownSection");
@@ -36,9 +20,29 @@ const openContentAgendaBtn = document.getElementById("openContentAgendaBtn");
 const openArticlesViewBtn = document.getElementById("openArticlesViewBtn");
 const openFeaturedViewBtn = document.getElementById("openFeaturedViewBtn");
 const newItemBtn = document.getElementById("newItemBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const editContextBanner = document.getElementById("editContextBanner");
+const editContextType = document.getElementById("editContextType");
+const editContextTitle = document.getElementById("editContextTitle");
+const editContextMeta = document.getElementById("editContextMeta");
+const editContextBackBtn = document.getElementById("editContextBackBtn");
+const editContextSaveBtn = document.getElementById("editContextSaveBtn");
+const editContextCancelBtn = document.getElementById("editContextCancelBtn");
+
+const adminArticlesOnline = document.getElementById("adminArticlesOnline");
+const adminArticlesDrafts = document.getElementById("adminArticlesDrafts");
+const featuredManagerList = document.getElementById("featuredManagerList");
+
+const countdownForm = document.getElementById("countdownForm");
+const adminCountdowns = document.getElementById("adminCountdowns");
 const newCountdownBtn = document.getElementById("newCountdownBtn");
 
+const agendaForm = document.getElementById("agendaForm");
+const adminAgendaEvents = document.getElementById("adminAgendaEvents");
+
 let currentSection = "articles";
+let currentArticleSubView = "articles";
 let draggedFeaturedId = null;
 
 let articles = [];
@@ -46,10 +50,7 @@ let countdowns = [];
 let events = [];
 let featuredIds = [];
 
-let currentArticleImageUrl = "";
-let currentArticleImagePath = "";
-let currentArticleImageFile = null;
-let currentArticleAttachments = [];
+let activeContext = null;
 
 function setLoginError(message = "") {
   if (!message) {
@@ -61,7 +62,6 @@ function setLoginError(message = "") {
 }
 
 function setAdminStatus(message = "") {
-  if (!adminStatus) return;
   if (!message) {
     adminStatus.classList.add("hidden");
     adminStatus.textContent = "";
@@ -84,13 +84,10 @@ function normalizeAgendaDateInput(value) {
   if (!value) return "";
   const raw = String(value).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-
   const iso = raw.match(/^(\d{4}-\d{2}-\d{2})T/);
   if (iso) return iso[1];
-
   const dmy = raw.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
   if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
-
   return "";
 }
 
@@ -127,8 +124,25 @@ function countdownSlug(title, targetAt, existing = "") {
   return `${base || "countdown"}-${stamp}`;
 }
 
+function setEditContext(context) {
+  activeContext = context;
+  editContextBanner.classList.remove("hidden");
+  editContextType.textContent = `Stai modificando: ${context.type}`;
+  editContextTitle.textContent = context.title || "";
+  editContextMeta.textContent = context.meta || "";
+}
+
+function clearEditContext() {
+  activeContext = null;
+  editContextBanner.classList.add("hidden");
+  editContextType.textContent = "";
+  editContextTitle.textContent = "";
+  editContextMeta.textContent = "";
+}
+
 function setContentSection(section) {
   currentSection = section;
+  clearEditContext();
   const showArticles = section === "articles";
   const showCountdown = section === "countdown";
   const showAgenda = section === "agenda";
@@ -147,11 +161,13 @@ function setContentSection(section) {
 }
 
 function setArticleSubView(view) {
+  currentArticleSubView = view;
   const showEdit = view === "articles";
   articlesView.classList.toggle("hidden", !showEdit);
   featuredView.classList.toggle("hidden", showEdit);
   openArticlesViewBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showEdit ? "bg-black text-white" : "bg-white"}`;
   openFeaturedViewBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showEdit ? "bg-white" : "bg-black text-white"}`;
+  if (showEdit) clearEditContext();
 }
 
 async function requireSettingsRow() {
@@ -191,11 +207,40 @@ async function ensureCurrentUserIsAdmin() {
   return Boolean(data && data.role === "admin");
 }
 
+function sanitizeFeaturedIds() {
+  const valid = new Set(articles.filter((item) => item.published).map((item) => item.id));
+  featuredIds = featuredIds.filter((id) => valid.has(id));
+}
+
+function getAutoFeaturedIds() {
+  return articles
+    .filter((item) => item.published)
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .map((item) => item.id)
+    .slice(0, 3);
+}
+
+function getEffectiveFeaturedIds() {
+  return featuredIds.length ? [...featuredIds] : getAutoFeaturedIds();
+}
+
+async function upsertFeaturedIds() {
+  const { error } = await supabase
+    .from("site_settings")
+    .upsert({ id: 1, featured_article_ids: featuredIds }, { onConflict: "id" });
+  if (error) throw error;
+}
+
 async function loadData() {
-  const [{ data: articleData, error: articleError }, { data: countdownData, error: countdownError }, { data: eventData, error: eventError }, settings] = await Promise.all([
+  const [
+    { data: articleData, error: articleError },
+    { data: countdownData, error: countdownError },
+    { data: eventData, error: eventError },
+    settings
+  ] = await Promise.all([
     supabase
       .from("articles")
-      .select("id,title,category,excerpt,content,image_url,image_path,published,attachments,created_at,updated_at")
+      .select("id,title,category,excerpt,published,created_at,updated_at")
       .order("updated_at", { ascending: false }),
     supabase
       .from("countdowns")
@@ -220,137 +265,38 @@ async function loadData() {
   sanitizeFeaturedIds();
 }
 
-function sanitizeFeaturedIds() {
-  const valid = new Set(articles.filter((item) => item.published).map((item) => item.id));
-  featuredIds = featuredIds.filter((id) => valid.has(id));
-}
-
-function getAutoFeaturedIds() {
-  return articles
-    .filter((item) => item.published)
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .map((item) => item.id)
-    .slice(0, 3);
-}
-
-function getEffectiveFeaturedIds() {
-  return featuredIds.length ? [...featuredIds] : getAutoFeaturedIds();
-}
-
-function formatBytes(bytes) {
-  if (!bytes) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  let size = bytes;
-  let unit = 0;
-  while (size >= 1024 && unit < units.length - 1) {
-    size /= 1024;
-    unit += 1;
-  }
-  return `${size.toFixed(size >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
-}
-
-function renderAttachmentList() {
-  if (!currentArticleAttachments.length) {
-    articleAttachmentList.innerHTML = '<p class="text-[11px] text-slate-600">Nessun allegato caricato.</p>';
-    return;
-  }
-
-  articleAttachmentList.innerHTML = currentArticleAttachments.map((item) => `
-    <div class="border-2 border-black p-2 flex items-center justify-between gap-2">
-      <div class="min-w-0">
-        <p class="text-xs font-semibold truncate">${escapeHtml(item.name)}</p>
-        <p class="text-[11px] text-slate-600">${escapeHtml(item.type || "file")} • ${formatBytes(item.size || 0)} ${item._newFile ? "• da caricare" : ""}</p>
-      </div>
-      <button type="button" data-attachment-remove-id="${item.id}" class="border-2 border-black px-2 py-1 text-[10px] font-bold uppercase">Rimuovi</button>
-    </div>
-  `).join("");
-}
-
-function resetArticleForm() {
-  articleForm.reset();
-  document.getElementById("articleId").value = "";
-  document.getElementById("published").checked = true;
-  document.getElementById("submitArticleBtn").textContent = "Salva Articolo";
-
-  currentArticleImageUrl = "";
-  currentArticleImagePath = "";
-  currentArticleImageFile = null;
-  articleImageInput.value = "";
-  articleImagePreview.classList.add("hidden");
-  articleImagePreview.removeAttribute("src");
-  removeArticleImageBtn.classList.add("hidden");
-
-  currentArticleAttachments = [];
-  articleAttachmentInput.value = "";
-  renderAttachmentList();
-}
-
-function startNewArticle() {
-  setContentSection("articles");
-  setArticleSubView("articles");
-  resetArticleForm();
-  document.getElementById("title").focus();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function fillArticleForm(article) {
-  setContentSection("articles");
-  setArticleSubView("articles");
-
-  document.getElementById("articleId").value = article.id;
-  document.getElementById("title").value = article.title;
-  document.getElementById("category").value = article.category;
-  document.getElementById("excerpt").value = article.excerpt;
-  document.getElementById("content").value = article.content;
-  document.getElementById("published").checked = article.published;
-  document.getElementById("submitArticleBtn").textContent = "Aggiorna Articolo";
-
-  currentArticleImageUrl = article.image_url || "";
-  currentArticleImagePath = article.image_path || "";
-  currentArticleImageFile = null;
-  articleImageInput.value = "";
-  if (currentArticleImageUrl) {
-    articleImagePreview.src = currentArticleImageUrl;
-    articleImagePreview.classList.remove("hidden");
-    removeArticleImageBtn.classList.remove("hidden");
-  } else {
-    articleImagePreview.classList.add("hidden");
-    articleImagePreview.removeAttribute("src");
-    removeArticleImageBtn.classList.add("hidden");
-  }
-
-  currentArticleAttachments = Array.isArray(article.attachments) ? article.attachments.map((att) => ({ ...att })) : [];
-  articleAttachmentInput.value = "";
-  renderAttachmentList();
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function renderAdminArticles() {
-  if (!articles.length) {
-    adminArticles.innerHTML = '<p class="text-sm">Nessun articolo presente.</p>';
-    return;
-  }
-
-  adminArticles.innerHTML = articles.map((article) => `
+function articleRow(article) {
+  const statusLabel = article.published ? "Online" : "Bozza";
+  const statusClass = article.published ? "text-emerald-700" : "text-amber-700";
+  return `
     <article class="border-2 border-black p-4">
       <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
         <div>
-          ${article.image_url ? `<img src="${article.image_url}" alt="Anteprima ${escapeHtml(article.title)}" class="w-20 h-20 object-cover border-2 border-black mb-2" />` : ""}
-          <p class="text-xs uppercase font-bold text-accent">${escapeHtml(article.category)}</p>
+          <p class="text-xs uppercase font-bold text-accent">${escapeHtml(article.category || "Senza categoria")}</p>
           <h4 class="text-lg font-semibold">${escapeHtml(article.title)}</h4>
-          <p class="text-sm mt-1">${escapeHtml(article.excerpt)}</p>
-          <p class="text-xs mt-2">Ultimo aggiornamento: ${new Date(article.updated_at).toLocaleString("it-IT")} | Stato: ${article.published ? "Pubblicato" : "Bozza"} | Allegati: ${(article.attachments || []).length}</p>
+          <p class="text-xs mt-2">Ultimo aggiornamento: ${new Date(article.updated_at).toLocaleString("it-IT")} | Stato: <span class="font-bold ${statusClass}">${statusLabel}</span></p>
         </div>
         <div class="flex flex-wrap gap-2 md:justify-end">
-          <a href="article.html?id=${encodeURIComponent(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Apri</a>
-          <button data-action="edit" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</button>
-          <button data-action="toggle" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">${article.published ? "Sposta in bozza" : "Pubblica"}</button>
-          <button data-action="delete" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
+          <a href="admin-article-editor.html?id=${encodeURIComponent(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</a>
+          <button data-article-action="toggle" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">${article.published ? "Sposta in bozze" : "Pubblica"}</button>
+          <button data-article-action="delete" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
         </div>
       </div>
     </article>
-  `).join("");
+  `;
+}
+
+function renderAdminArticles() {
+  const online = articles.filter((item) => item.published);
+  const drafts = articles.filter((item) => !item.published);
+
+  adminArticlesOnline.innerHTML = online.length
+    ? online.map(articleRow).join("")
+    : '<p class="text-sm">Nessun articolo online.</p>';
+
+  adminArticlesDrafts.innerHTML = drafts.length
+    ? drafts.map(articleRow).join("")
+    : '<p class="text-sm">Nessuna bozza presente.</p>';
 }
 
 function renderFeaturedManager() {
@@ -412,12 +358,6 @@ function renderFeaturedManager() {
   `;
 }
 
-function resetAgendaForm() {
-  agendaForm.reset();
-  document.getElementById("agendaEventId").value = "";
-  document.getElementById("submitAgendaBtn").textContent = "Salva Evento";
-}
-
 function resetCountdownForm() {
   countdownForm.reset();
   document.getElementById("countdownId").value = "";
@@ -429,6 +369,20 @@ function resetCountdownForm() {
 function startNewCountdown() {
   setContentSection("countdown");
   resetCountdownForm();
+  setEditContext({
+    type: "Countdown",
+    title: "Nuovo countdown",
+    meta: "ID: non assegnato | Stato: bozza locale",
+    onSave: () => countdownForm.requestSubmit(),
+    onCancel: () => {
+      resetCountdownForm();
+      clearEditContext();
+    },
+    onBack: () => {
+      resetCountdownForm();
+      clearEditContext();
+    }
+  });
   document.getElementById("countdownTitle").focus();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -441,6 +395,22 @@ function fillCountdownForm(item) {
   document.getElementById("countdownIsFeatured").checked = Boolean(item.is_featured);
   document.getElementById("countdownActive").checked = Boolean(item.active);
   document.getElementById("submitCountdownBtn").textContent = "Aggiorna Countdown";
+
+  setEditContext({
+    type: "Countdown",
+    title: item.title,
+    meta: `Slug: ${item.slug || "-"} | Stato: ${item.active ? "Online" : "Disattivo"}`,
+    onSave: () => countdownForm.requestSubmit(),
+    onCancel: () => {
+      resetCountdownForm();
+      clearEditContext();
+    },
+    onBack: () => {
+      resetCountdownForm();
+      clearEditContext();
+    }
+  });
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -462,7 +432,7 @@ function renderAdminCountdowns() {
           <h4 class="text-lg font-semibold">${escapeHtml(item.title)}</h4>
           <p class="text-sm mt-1">Data target: ${new Date(item.target_at).toLocaleString("it-IT", { dateStyle: "medium", timeStyle: "short" })}</p>
           <p class="text-xs mt-2">
-            Stato: ${item.active ? "Attivo" : "Disattivo"}
+            ID: ${item.id} | Slug: ${item.slug || "-"} | Stato: ${item.active ? "Online" : "Disattivo"}
             ${item.is_featured ? " | In evidenza principale" : ""}
           </p>
         </div>
@@ -475,9 +445,29 @@ function renderAdminCountdowns() {
   `).join("");
 }
 
+function resetAgendaForm() {
+  agendaForm.reset();
+  document.getElementById("agendaEventId").value = "";
+  document.getElementById("submitAgendaBtn").textContent = "Salva Evento";
+}
+
 function startNewEvent() {
   setContentSection("agenda");
   resetAgendaForm();
+  setEditContext({
+    type: "Evento agenda",
+    title: "Nuovo evento",
+    meta: "ID: non assegnato",
+    onSave: () => agendaForm.requestSubmit(),
+    onCancel: () => {
+      resetAgendaForm();
+      clearEditContext();
+    },
+    onBack: () => {
+      resetAgendaForm();
+      clearEditContext();
+    }
+  });
   document.getElementById("agendaTitle").focus();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -490,6 +480,22 @@ function fillAgendaForm(item) {
   document.getElementById("agendaDate").value = normalizeAgendaDateInput(item.date);
   document.getElementById("agendaDescription").value = item.description;
   document.getElementById("submitAgendaBtn").textContent = "Aggiorna Evento";
+
+  setEditContext({
+    type: "Evento agenda",
+    title: item.title,
+    meta: `ID: ${item.id} | Data: ${formatLocalDate(normalizeAgendaDateInput(item.date)) || "-"}`,
+    onSave: () => agendaForm.requestSubmit(),
+    onCancel: () => {
+      resetAgendaForm();
+      clearEditContext();
+    },
+    onBack: () => {
+      resetAgendaForm();
+      clearEditContext();
+    }
+  });
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -506,7 +512,7 @@ function renderAdminAgendaEvents() {
           <p class="text-xs uppercase font-bold text-accent">${escapeHtml(item.category)}</p>
           <h4 class="text-lg font-semibold">${escapeHtml(item.title)}</h4>
           <p class="text-sm mt-1">${escapeHtml(item.description)}</p>
-          <p class="text-xs mt-2">Data: ${formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida"}</p>
+          <p class="text-xs mt-2">ID: ${item.id} | Data: ${formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida"}</p>
         </div>
         <div class="flex flex-wrap gap-2 md:justify-end">
           <button data-agenda-action="edit" data-id="${item.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</button>
@@ -517,44 +523,20 @@ function renderAdminAgendaEvents() {
   `).join("");
 }
 
-async function upsertFeaturedIds() {
-  const { error } = await supabase
-    .from("site_settings")
-    .upsert({ id: 1, featured_article_ids: featuredIds }, { onConflict: "id" });
-  if (error) throw error;
-}
-
-async function uploadToStorage(articleId, file, kind) {
-  const stamp = Date.now();
-  const cleanName = toSlugSafeName(file.name);
-  const path = `articles/${articleId}/${kind}/${stamp}-${cleanName}`;
-
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    cacheControl: "3600",
-    upsert: false
-  });
-  if (error) throw error;
-
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return { path, url: data.publicUrl };
-}
-
 async function handleAuthUi() {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
-  const session = data?.session;
-  const isAuth = Boolean(session);
 
+  const isAuth = Boolean(data?.session);
   loginBox.classList.toggle("hidden", isAuth);
   adminPanel.classList.toggle("hidden", !isAuth);
+
   if (!isAuth) {
     setAdminStatus("");
     setLoginError("");
-  }
-
-  if (!isAuth) {
     setContentSection("articles");
     setArticleSubView("articles");
+    clearEditContext();
     return false;
   }
 
@@ -574,8 +556,8 @@ async function handleAuthUi() {
     renderAdminCountdowns();
     renderAdminAgendaEvents();
     setAdminStatus("");
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     setAdminStatus("Login riuscito, ma errore nel caricamento dati admin (controlla schema/policy Supabase).");
   }
 
@@ -600,11 +582,10 @@ loginForm.addEventListener("submit", async (event) => {
       setLoginError(authErrorMessage(error));
       return;
     }
-
     await handleAuthUi();
-  } catch (error) {
-    console.error(error);
-    setLoginError(authErrorMessage(error));
+  } catch (err) {
+    console.error(err);
+    setLoginError(authErrorMessage(err));
   } finally {
     if (submitBtn instanceof HTMLButtonElement) {
       submitBtn.disabled = false;
@@ -613,7 +594,7 @@ loginForm.addEventListener("submit", async (event) => {
   }
 });
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
+logoutBtn?.addEventListener("click", async () => {
   await supabase.auth.signOut();
   await handleAuthUi();
 });
@@ -640,23 +621,25 @@ openArticlesViewBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   setArticleSubView("articles");
 });
+
 openFeaturedViewBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   setArticleSubView("featured");
   renderFeaturedManager();
+  clearEditContext();
 });
 
 newItemBtn?.addEventListener("click", (event) => {
   event.preventDefault();
+  if (currentSection === "articles") {
+    window.location.href = "admin-article-editor.html?mode=new";
+    return;
+  }
   if (currentSection === "countdown") {
     startNewCountdown();
     return;
   }
-  if (currentSection === "agenda") {
-    startNewEvent();
-    return;
-  }
-  startNewArticle();
+  startNewEvent();
 });
 
 newCountdownBtn?.addEventListener("click", (event) => {
@@ -664,128 +647,16 @@ newCountdownBtn?.addEventListener("click", (event) => {
   startNewCountdown();
 });
 
-articleImageInput.addEventListener("change", () => {
-  const file = articleImageInput.files?.[0];
-  if (!file) return;
-  currentArticleImageFile = file;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    const preview = typeof reader.result === "string" ? reader.result : "";
-    if (!preview) return;
-    currentArticleImageUrl = preview;
-    articleImagePreview.src = preview;
-    articleImagePreview.classList.remove("hidden");
-    removeArticleImageBtn.classList.remove("hidden");
-  };
-  reader.readAsDataURL(file);
+editContextSaveBtn?.addEventListener("click", () => {
+  if (activeContext?.onSave) activeContext.onSave();
 });
 
-removeArticleImageBtn.addEventListener("click", () => {
-  currentArticleImageUrl = "";
-  currentArticleImagePath = "";
-  currentArticleImageFile = null;
-  articleImageInput.value = "";
-  articleImagePreview.classList.add("hidden");
-  articleImagePreview.removeAttribute("src");
-  removeArticleImageBtn.classList.add("hidden");
+editContextCancelBtn?.addEventListener("click", () => {
+  if (activeContext?.onCancel) activeContext.onCancel();
 });
 
-articleAttachmentInput.addEventListener("change", () => {
-  const files = Array.from(articleAttachmentInput.files || []);
-  if (!files.length) return;
-
-  currentArticleAttachments = currentArticleAttachments.concat(
-    files.map((file) => ({
-      id: `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      _newFile: true,
-      _file: file
-    }))
-  );
-
-  articleAttachmentInput.value = "";
-  renderAttachmentList();
-});
-
-articleAttachmentList.addEventListener("click", (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLElement)) return;
-  const removeId = target.dataset.attachmentRemoveId;
-  if (!removeId) return;
-  currentArticleAttachments = currentArticleAttachments.filter((item) => item.id !== removeId);
-  renderAttachmentList();
-});
-
-articleForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  try {
-    const now = new Date().toISOString();
-    const id = document.getElementById("articleId").value || crypto.randomUUID();
-
-    let imageUrl = currentArticleImageUrl;
-    let imagePath = currentArticleImagePath;
-
-    if (currentArticleImageFile) {
-      const uploaded = await uploadToStorage(id, currentArticleImageFile, "images");
-      imageUrl = uploaded.url;
-      imagePath = uploaded.path;
-    }
-
-    const attachments = [];
-    for (const item of currentArticleAttachments) {
-      if (item._newFile && item._file) {
-        const uploaded = await uploadToStorage(id, item._file, "attachments");
-        attachments.push({
-          id: crypto.randomUUID(),
-          name: item.name,
-          type: item.type,
-          size: item.size,
-          path: uploaded.path,
-          url: uploaded.url
-        });
-      } else {
-        attachments.push({
-          id: item.id,
-          name: item.name,
-          type: item.type,
-          size: item.size,
-          path: item.path,
-          url: item.url
-        });
-      }
-    }
-
-    const payload = {
-      id,
-      title: document.getElementById("title").value.trim(),
-      category: document.getElementById("category").value.trim(),
-      excerpt: document.getElementById("excerpt").value.trim(),
-      content: document.getElementById("content").value.trim(),
-      image_url: imageUrl || null,
-      image_path: imagePath || null,
-      attachments,
-      published: document.getElementById("published").checked,
-      updated_at: now
-    };
-
-    const existing = articles.find((article) => article.id === id);
-    if (!existing) payload.created_at = now;
-
-    const { error } = await supabase.from("articles").upsert(payload, { onConflict: "id" });
-    if (error) throw error;
-
-    await loadData();
-    resetArticleForm();
-    renderAdminArticles();
-    renderFeaturedManager();
-  } catch (error) {
-    console.error(error);
-    alert("Errore durante il salvataggio dell'articolo.");
-  }
+editContextBackBtn?.addEventListener("click", () => {
+  if (activeContext?.onBack) activeContext.onBack();
 });
 
 countdownForm.addEventListener("submit", async (event) => {
@@ -827,11 +698,13 @@ countdownForm.addEventListener("submit", async (event) => {
     if (error) throw error;
 
     await loadData();
-    resetCountdownForm();
     renderAdminCountdowns();
-  } catch (error) {
-    console.error(error);
-    alert(error?.message || "Errore durante il salvataggio del countdown.");
+    resetCountdownForm();
+    clearEditContext();
+    setAdminStatus("Countdown salvato correttamente.");
+  } catch (err) {
+    console.error(err);
+    alert(err?.message || "Errore durante il salvataggio del countdown.");
   }
 });
 
@@ -857,11 +730,89 @@ agendaForm.addEventListener("submit", async (event) => {
     if (error) throw error;
 
     await loadData();
-    resetAgendaForm();
     renderAdminAgendaEvents();
-  } catch (error) {
-    console.error(error);
+    resetAgendaForm();
+    clearEditContext();
+    setAdminStatus("Evento agenda salvato correttamente.");
+  } catch (err) {
+    console.error(err);
     alert("Errore durante il salvataggio dell'evento.");
+  }
+});
+
+adminArticlesOnline.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+
+  const action = target.dataset.articleAction;
+  const id = target.dataset.id;
+  if (!action || !id) return;
+
+  const article = articles.find((item) => item.id === id);
+  if (!article) return;
+
+  try {
+    if (action === "toggle") {
+      const { error } = await supabase
+        .from("articles")
+        .update({ published: !article.published, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      await loadData();
+      renderAdminArticles();
+      renderFeaturedManager();
+      return;
+    }
+
+    if (action === "delete") {
+      if (!confirm("Vuoi eliminare definitivamente questo articolo?")) return;
+      const { error } = await supabase.from("articles").delete().eq("id", id);
+      if (error) throw error;
+      await loadData();
+      renderAdminArticles();
+      renderFeaturedManager();
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Errore operazione articolo.");
+  }
+});
+
+adminArticlesDrafts.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+
+  const action = target.dataset.articleAction;
+  const id = target.dataset.id;
+  if (!action || !id) return;
+
+  const article = articles.find((item) => item.id === id);
+  if (!article) return;
+
+  try {
+    if (action === "toggle") {
+      const { error } = await supabase
+        .from("articles")
+        .update({ published: !article.published, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      await loadData();
+      renderAdminArticles();
+      renderFeaturedManager();
+      return;
+    }
+
+    if (action === "delete") {
+      if (!confirm("Vuoi eliminare definitivamente questo articolo?")) return;
+      const { error } = await supabase.from("articles").delete().eq("id", id);
+      if (error) throw error;
+      await loadData();
+      renderAdminArticles();
+      renderFeaturedManager();
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Errore operazione articolo.");
   }
 });
 
@@ -888,53 +839,11 @@ adminCountdowns.addEventListener("click", async (event) => {
       if (error) throw error;
       await loadData();
       renderAdminCountdowns();
+      clearEditContext();
     }
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     alert("Errore operazione countdown.");
-  }
-});
-
-adminArticles.addEventListener("click", async (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLElement)) return;
-
-  const action = target.dataset.action;
-  const id = target.dataset.id;
-  if (!action || !id) return;
-
-  const article = articles.find((item) => item.id === id);
-  if (!article) return;
-
-  try {
-    if (action === "edit") {
-      fillArticleForm(article);
-      return;
-    }
-
-    if (action === "toggle") {
-      const { error } = await supabase
-        .from("articles")
-        .update({ published: !article.published, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-      await loadData();
-      renderAdminArticles();
-      renderFeaturedManager();
-      return;
-    }
-
-    if (action === "delete") {
-      if (!confirm("Vuoi eliminare definitivamente questo articolo?")) return;
-      const { error } = await supabase.from("articles").delete().eq("id", id);
-      if (error) throw error;
-      await loadData();
-      renderAdminArticles();
-      renderFeaturedManager();
-    }
-  } catch (error) {
-    console.error(error);
-    alert("Errore operazione articolo.");
   }
 });
 
@@ -961,9 +870,10 @@ adminAgendaEvents.addEventListener("click", async (event) => {
       if (error) throw error;
       await loadData();
       renderAdminAgendaEvents();
+      clearEditContext();
     }
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     alert("Errore operazione agenda.");
   }
 });
@@ -988,8 +898,8 @@ featuredManagerList.addEventListener("click", async (event) => {
   try {
     await upsertFeaturedIds();
     renderFeaturedManager();
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     alert("Errore salvataggio evidenza.");
   }
 });
@@ -1045,8 +955,8 @@ featuredManagerList.addEventListener("drop", async (event) => {
   try {
     await upsertFeaturedIds();
     renderFeaturedManager();
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error(err);
     alert("Errore riordino evidenza.");
   }
 });
@@ -1057,28 +967,28 @@ featuredManagerList.addEventListener("dragend", () => {
 });
 
 supabase.auth.onAuthStateChange(() => {
-  handleAuthUi().catch((error) => {
-    console.error(error);
+  handleAuthUi().catch((err) => {
+    console.error(err);
     setLoginError("Errore sincronizzazione sessione.");
   });
 });
 
 async function bootstrapAdmin() {
-  renderAttachmentList();
   resetCountdownForm();
+  resetAgendaForm();
 
   if (REQUIRE_LOGIN_ON_EACH_VISIT) {
     try {
       await supabase.auth.signOut({ scope: "local" });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
   }
 
   await handleAuthUi();
 }
 
-bootstrapAdmin().catch((error) => {
-  console.error(error);
+bootstrapAdmin().catch((err) => {
+  console.error(err);
   setLoginError("Errore inizializzazione admin.");
 });

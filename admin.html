@@ -61,6 +61,18 @@
         <button type="button" id="openContentAgendaBtn" class="border-2 border-black px-4 py-2 text-xs font-bold uppercase bg-white">Gestione agenda</button>
       </div>
 
+      <section id="editContextBanner" class="hidden border-4 border-black bg-white p-4 shadow-brutal">
+        <p class="text-xs font-bold uppercase text-accent">Contesto modifica</p>
+        <h3 id="editContextType" class="headline text-4xl mt-1">Stai modificando: Elemento</h3>
+        <p id="editContextTitle" class="text-lg font-semibold mt-1"></p>
+        <p id="editContextMeta" class="text-xs mt-1 text-slate-600"></p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button type="button" id="editContextBackBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Torna alla lista</button>
+          <button type="button" id="editContextSaveBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-accent text-white">Salva</button>
+          <button type="button" id="editContextCancelBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Annulla</button>
+        </div>
+      </section>
+
       <section id="articlesSection" class="space-y-8">
         <div class="flex gap-2">
           <button type="button" id="openArticlesViewBtn" class="border-2 border-black px-4 py-2 text-xs font-bold uppercase bg-black text-white">Modifica articoli</button>
@@ -68,48 +80,17 @@
         </div>
 
         <section id="articlesView" class="space-y-8">
-          <form id="articleForm" class="border-4 border-black bg-white p-6 shadow-brutal space-y-4">
-            <input type="hidden" id="articleId" />
-            <div class="grid md:grid-cols-2 gap-4">
-              <div>
-                <label class="text-xs font-bold uppercase">Titolo</label>
-                <input id="title" required class="w-full border-2 border-black" />
-              </div>
-              <div>
-                <label class="text-xs font-bold uppercase">Categoria</label>
-                <input id="category" required class="w-full border-2 border-black" placeholder="Compiti, Eventi, Progetti..." />
-              </div>
+          <section class="border-4 border-black bg-white p-6 shadow-brutal">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="headline text-3xl">Articoli online</h3>
+              <a href="admin-article-editor.html?mode=new" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-accent text-white">Nuovo articolo</a>
             </div>
-            <div>
-              <label class="text-xs font-bold uppercase">Estratto</label>
-              <textarea id="excerpt" required rows="2" class="w-full border-2 border-black"></textarea>
-            </div>
-            <div>
-              <label class="text-xs font-bold uppercase">Contenuto</label>
-              <textarea id="content" required rows="8" class="w-full border-2 border-black"></textarea>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs font-bold uppercase">Foto articolo</label>
-              <input id="articleImageInput" type="file" accept="image/*" class="w-full border-2 border-black file:mr-3 file:border-0 file:bg-black file:px-3 file:py-2 file:text-xs file:font-bold file:uppercase file:text-white" />
-              <p class="text-[11px] text-slate-600">L'immagine viene adattata automaticamente in tutte le card e nel dettaglio articolo.</p>
-              <img id="articleImagePreview" alt="Anteprima foto articolo" class="hidden w-full max-h-56 object-cover border-2 border-black" />
-              <button type="button" id="removeArticleImageBtn" class="hidden border-2 border-black bg-white px-3 py-1 text-[11px] font-bold uppercase">Rimuovi foto</button>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs font-bold uppercase">Allegati scaricabili</label>
-              <input id="articleAttachmentInput" type="file" multiple class="w-full border-2 border-black file:mr-3 file:border-0 file:bg-black file:px-3 file:py-2 file:text-xs file:font-bold file:uppercase file:text-white" />
-              <p class="text-[11px] text-slate-600">Puoi allegare PDF, MP4 e altri file. Gli utenti potranno scaricarli a fine articolo.</p>
-              <div id="articleAttachmentList" class="space-y-2"></div>
-            </div>
-            <label class="inline-flex items-center gap-2 font-semibold"><input id="published" type="checkbox" checked /> Pubblica subito</label>
-            <div class="flex gap-3">
-              <button type="submit" id="submitArticleBtn" class="border-2 border-black bg-accent text-white px-4 py-2 text-xs font-bold uppercase shadow-brutal">Salva Articolo</button>
-            </div>
-          </form>
+            <div id="adminArticlesOnline" class="mt-4 space-y-3"></div>
+          </section>
 
           <section class="border-4 border-black bg-white p-6 shadow-brutal">
-            <h3 class="headline text-3xl">Articoli salvati</h3>
-            <div id="adminArticles" class="mt-4 space-y-3"></div>
+            <h3 class="headline text-3xl">Bozze</h3>
+            <div id="adminArticlesDrafts" class="mt-4 space-y-3"></div>
           </section>
         </section>
 
@@ -187,6 +168,6 @@
     </section>
   </main>
 
-  <script type="module" src="assets/js/admin.js?v=20260222b"></script>
+  <script type="module" src="assets/js/admin.js?v=20260222c"></script>
 </body>
 </html>
