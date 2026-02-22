@@ -1,6 +1,6 @@
 import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js";
 
-const REQUIRE_LOGIN_ON_EACH_VISIT = true;
+const REQUIRE_LOGIN_ON_EACH_VISIT = false;
 
 const loginBox = document.getElementById("loginBox");
 const adminPanel = document.getElementById("adminPanel");
