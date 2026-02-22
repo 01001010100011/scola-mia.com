@@ -1,0 +1,83 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "meta": {
+    "name": "scola-mia.com-design-tokens",
+    "version": "1.0.0",
+    "updated": "2026-02-22"
+  },
+  "color": {
+    "accent": "#0c7ff2",
+    "paper": "#f4f3ee",
+    "ink": "#101010",
+    "marker": "#ffe66d",
+    "white": "#ffffff",
+    "mutedText": "#475569",
+    "gridLine": "rgba(0, 0, 0, 0.08)",
+    "overlay": "rgba(0, 0, 0, 0.5)"
+  },
+  "typography": {
+    "fontFamily": {
+      "display": "Bebas Neue, sans-serif",
+      "body": "IBM Plex Sans, sans-serif",
+      "icon": "Material Symbols Outlined"
+    },
+    "fontWeight": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "letterSpacing": {
+      "headline": "0.04em",
+      "caps": "0.08em"
+    },
+    "lineHeight": {
+      "tight": 0.85,
+      "normal": 1.5
+    }
+  },
+  "border": {
+    "thin": "2px solid #000000",
+    "thick": "4px solid #000000"
+  },
+  "radius": {
+    "none": "0px"
+  },
+  "shadow": {
+    "brutal": "4px 4px 0 0 #000000",
+    "brutalHover": "6px 6px 0 0 #000000"
+  },
+  "space": {
+    "2": "0.5rem",
+    "3": "0.75rem",
+    "4": "1rem",
+    "5": "1.25rem",
+    "6": "1.5rem",
+    "8": "2rem",
+    "10": "2.5rem",
+    "12": "3rem"
+  },
+  "layout": {
+    "containerMax": "80rem",
+    "gridSize": "28px"
+  },
+  "motion": {
+    "duration": {
+      "fast": "200ms",
+      "normal": "500ms"
+    },
+    "easing": {
+      "default": "ease",
+      "drawer": "ease-out"
+    },
+    "hoverLift": {
+      "translate": "-2px, -2px"
+    }
+  },
+  "breakpoint": {
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px"
+  }
+}
