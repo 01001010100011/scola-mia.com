@@ -8,6 +8,7 @@
 - Run `supabase/seed_presentation_article.sql` to create/update the "Presentazione Sito" article used by the Home hero button.
 - Run `supabase/countdown_events.sql` to create/seed countdown events with public read and authenticated write policies.
 - Run `supabase/admin_countdowns.sql` to create the new `countdowns` table, admin role mapping and RLS admin-only CRUD.
+- If you want only the current future school dates, run `supabase/seed_countdowns_future_only.sql`.
 
 ## 2. Create admin user
 - In Authentication > Users, create an admin email/password user.
