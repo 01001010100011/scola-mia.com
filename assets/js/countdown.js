@@ -4,7 +4,6 @@ import { formatCountdown, formatTargetDate } from "./countdown-core.js";
 
 const featuredEl = document.getElementById("featuredCountdown");
 const listEl = document.getElementById("countdownList");
-const statusEl = document.getElementById("countdownStatus");
 const searchInput = document.getElementById("countdownSearchInput");
 const searchForm = document.getElementById("countdownSearchForm");
 
@@ -41,10 +40,6 @@ function renderState() {
   if (!filtered.length) {
     featuredEl.innerHTML = "";
     listEl.innerHTML = '<div class="border-2 border-black bg-white p-4">Nessun countdown trovato con i filtri correnti.</div>';
-    if (statusEl) {
-      statusEl.textContent = "Mostrati solo eventi futuri (fuso Europe/Rome).";
-      statusEl.classList.remove("hidden");
-    }
     return;
   }
 
@@ -55,11 +50,6 @@ function renderState() {
   listEl.innerHTML = others.length
     ? others.map((event) => renderCard(event)).join("")
     : '<div class="border-2 border-black bg-white p-4">Nessun altro countdown futuro.</div>';
-
-  if (statusEl) {
-    statusEl.textContent = "Mostrati solo eventi futuri (fuso Europe/Rome).";
-    statusEl.classList.remove("hidden");
-  }
 }
 
 function updateEventNodes(event) {
@@ -87,7 +77,6 @@ function mountTicker() {
     if (!allEvents.length) {
       featuredEl.innerHTML = "";
       listEl.innerHTML = '<div class="border-2 border-black bg-white p-4">Nessun countdown futuro disponibile.</div>';
-      if (statusEl) statusEl.classList.add("hidden");
       clearInterval(timer);
       timer = null;
       return;
