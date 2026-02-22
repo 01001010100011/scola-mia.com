@@ -42,9 +42,9 @@
       <p id="editorContextTitle" class="text-lg font-semibold mt-1">Nuovo articolo</p>
       <p id="editorContextMeta" class="text-xs mt-1 text-slate-600">ID: non assegnato | Stato: bozza</p>
       <div class="mt-3 flex flex-wrap gap-2">
-        <a href="admin.html" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Torna alla lista</a>
-        <button type="button" id="saveFromBannerBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-accent text-white">Salva</button>
         <button type="button" id="cancelBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Annulla</button>
+        <button type="button" id="saveDraftBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Salva nelle bozze</button>
+        <button type="button" id="publishBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-accent text-white">Pubblica articolo</button>
       </div>
     </section>
 
@@ -84,12 +84,6 @@
         <input id="articleAttachmentInput" type="file" multiple class="w-full border-2 border-black file:mr-3 file:border-0 file:bg-black file:px-3 file:py-2 file:text-xs file:font-bold file:uppercase file:text-white" />
         <p class="text-[11px] text-slate-600">Puoi allegare PDF, MP4 e altri file. Gli utenti potranno scaricarli a fine articolo.</p>
         <div id="articleAttachmentList" class="space-y-2"></div>
-      </div>
-
-      <label class="inline-flex items-center gap-2 font-semibold"><input id="published" type="checkbox" checked /> Online (se disattivato va in bozze)</label>
-
-      <div class="flex gap-3">
-        <button type="submit" id="submitArticleBtn" class="border-2 border-black bg-accent text-white px-4 py-2 text-xs font-bold uppercase shadow-brutal">Salva Articolo</button>
       </div>
     </form>
   </main>

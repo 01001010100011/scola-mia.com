@@ -4,8 +4,9 @@ const BUCKET = "article-media";
 
 const form = document.getElementById("articleEditorForm");
 const editorError = document.getElementById("editorError");
-const saveFromBannerBtn = document.getElementById("saveFromBannerBtn");
 const cancelBtn = document.getElementById("cancelBtn");
+const saveDraftBtn = document.getElementById("saveDraftBtn");
+const publishBtn = document.getElementById("publishBtn");
 
 const contextTitle = document.getElementById("editorContextTitle");
 const contextMeta = document.getElementById("editorContextMeta");
@@ -15,8 +16,6 @@ const titleInput = document.getElementById("title");
 const categoryInput = document.getElementById("category");
 const excerptInput = document.getElementById("excerpt");
 const contentInput = document.getElementById("content");
-const publishedInput = document.getElementById("published");
-const submitBtn = document.getElementById("submitArticleBtn");
 
 const articleImageInput = document.getElementById("articleImageInput");
 const articleImagePreview = document.getElementById("articleImagePreview");
@@ -29,6 +28,8 @@ let currentArticleImageUrl = "";
 let currentArticleImagePath = "";
 let currentArticleImageFile = null;
 let currentArticleAttachments = [];
+let currentPublished = false;
+let isSaving = false;
 
 function setError(message = "") {
   if (!message) {
@@ -83,9 +84,36 @@ function setImagePreview(url = "") {
 
 function syncContext() {
   const id = articleIdInput.value || "non assegnato";
-  const status = publishedInput.checked ? "Online" : "Bozza";
+  const status = currentPublished ? "Online" : "Bozza";
   contextTitle.textContent = titleInput.value.trim() || (articleIdInput.value ? "Articolo in modifica" : "Nuovo articolo");
   contextMeta.textContent = `ID: ${id} | Stato: ${status}`;
+}
+
+function updateActionButtons() {
+  const hasId = Boolean(articleIdInput.value);
+  saveDraftBtn.textContent = currentPublished ? "Sposta nelle bozze" : "Salva nelle bozze";
+  publishBtn.textContent = currentPublished && hasId ? "Aggiorna articolo" : "Pubblica articolo";
+}
+
+function setSavingState(saving) {
+  isSaving = saving;
+  cancelBtn.disabled = saving;
+  saveDraftBtn.disabled = saving;
+  publishBtn.disabled = saving;
+  if (!saving) {
+    updateActionButtons();
+    return;
+  }
+  saveDraftBtn.textContent = "Salvataggio...";
+  publishBtn.textContent = "Salvataggio...";
+}
+
+function validateRequiredFields() {
+  if (!titleInput.value.trim()) return "Titolo obbligatorio.";
+  if (!categoryInput.value.trim()) return "Categoria obbligatoria.";
+  if (!excerptInput.value.trim()) return "Descrizione / Estratto obbligatoria.";
+  if (!contentInput.value.trim()) return "Contenuto obbligatorio.";
+  return "";
 }
 
 async function ensureCurrentUserIsAdmin() {
@@ -126,7 +154,7 @@ function mapRecordToForm(record) {
   categoryInput.value = record.category || "";
   excerptInput.value = record.excerpt || "";
   contentInput.value = record.content || "";
-  publishedInput.checked = Boolean(record.published);
+  currentPublished = Boolean(record.published);
 
   currentArticleImageUrl = record.image_url || "";
   currentArticleImagePath = record.image_path || "";
@@ -138,7 +166,7 @@ function mapRecordToForm(record) {
   articleAttachmentInput.value = "";
   renderAttachmentList();
 
-  submitBtn.textContent = "Aggiorna Articolo";
+  updateActionButtons();
   syncContext();
 }
 
@@ -146,7 +174,7 @@ function resetToNew() {
   originalRecord = null;
   form.reset();
   articleIdInput.value = "";
-  publishedInput.checked = false;
+  currentPublished = false;
 
   currentArticleImageUrl = "";
   currentArticleImagePath = "";
@@ -158,7 +186,7 @@ function resetToNew() {
   articleAttachmentInput.value = "";
   renderAttachmentList();
 
-  submitBtn.textContent = "Salva Articolo";
+  updateActionButtons();
   syncContext();
 }
 
@@ -261,9 +289,8 @@ articleAttachmentList.addEventListener("click", (event) => {
   renderAttachmentList();
 });
 
-saveFromBannerBtn.addEventListener("click", () => form.requestSubmit());
-
 cancelBtn.addEventListener("click", () => {
+  if (isSaving) return;
   if (originalRecord) {
     mapRecordToForm(originalRecord);
     return;
@@ -271,18 +298,23 @@ cancelBtn.addEventListener("click", () => {
   resetToNew();
 });
 
-[titleInput, categoryInput, excerptInput, contentInput, publishedInput].forEach((node) => {
+[titleInput, categoryInput, excerptInput, contentInput].forEach((node) => {
   node.addEventListener("input", syncContext);
   node.addEventListener("change", syncContext);
 });
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function saveArticle(targetPublished) {
+  if (isSaving) return;
   setError("");
 
   try {
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Salvataggio...";
+    const validationError = validateRequiredFields();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setSavingState(true);
 
     const now = new Date().toISOString();
     const id = articleIdInput.value || crypto.randomUUID();
@@ -328,7 +360,7 @@ form.addEventListener("submit", async (event) => {
       image_url: imageUrl || null,
       image_path: imagePath || null,
       attachments,
-      published: publishedInput.checked,
+      published: targetPublished,
       updated_at: now
     };
 
@@ -356,13 +388,21 @@ form.addEventListener("submit", async (event) => {
 
     originalRecord = structuredClone(saved);
     mapRecordToForm(saved);
+    setError("");
   } catch (error) {
     console.error(error);
     setError(error?.message || "Errore durante il salvataggio dell'articolo.");
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = articleIdInput.value ? "Aggiorna Articolo" : "Salva Articolo";
+    setSavingState(false);
   }
+}
+
+saveDraftBtn.addEventListener("click", () => saveArticle(false));
+publishBtn.addEventListener("click", () => saveArticle(true));
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveArticle(currentPublished);
 });
 
 bootstrap().catch((error) => {
