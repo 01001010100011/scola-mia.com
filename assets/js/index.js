@@ -23,8 +23,9 @@ function shortDate(value) {
 function articleCard(article) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
   const publishedShort = shortDate(article.created_at || article.updated_at);
+  const articleUrl = buildArticleUrl(article.id, article.title);
   return `
-    <article class="border-2 border-black bg-white p-5 shadow-brutal lift transition-all h-full flex flex-col">
+    <a href="${articleUrl}" class="block border-2 border-black bg-white p-5 shadow-brutal lift transition-all h-full flex flex-col">
       <div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden bg-slate-100 flex items-center justify-center">
         ${article.image_url
           ? `<img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" />`
@@ -37,8 +38,8 @@ function articleCard(article) {
       <h3 class="mt-2 text-xl font-semibold">${article.title}</h3>
       ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
       <p class="mt-2 text-sm flex-1">${article.excerpt}</p>
-      <a class="inline-block mt-4 text-xs font-bold uppercase underline" href="${buildArticleUrl(article.id, article.title)}">Leggi</a>
-    </article>
+      <span class="inline-block mt-4 text-xs font-bold uppercase underline">Leggi</span>
+    </a>
   `;
 }
 
