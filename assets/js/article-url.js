@@ -9,9 +9,8 @@ export function slugifyArticleTitle(title) {
 }
 
 export function buildArticleUrl(id, title) {
-  const params = new URLSearchParams();
-  params.set("id", String(id || ""));
   const slug = slugifyArticleTitle(title);
-  if (slug) params.set("slug", slug);
-  return `/article/?${params.toString()}`;
+  const safeId = encodeURIComponent(String(id || ""));
+  const slugPart = slug ? `-${slug}` : "";
+  return `/articoli/${safeId}${slugPart}/`;
 }

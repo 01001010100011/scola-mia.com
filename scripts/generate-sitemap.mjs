@@ -38,6 +38,19 @@ function publicRouteFolders() {
   return ["archivio", "article", "countdown", "countdown-detail", "agenda", "agenda-detail", "contatti", "ricerca"];
 }
 
+async function articleShareRoutes() {
+  const directory = path.join(ROOT, "articoli");
+  try {
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
 function xmlEscape(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -75,6 +88,23 @@ async function buildSitemap() {
       `    <lastmod>${lastmod}</lastmod>\n` +
       `    <changefreq>${changefreq}</changefreq>\n` +
       `    <priority>${priority}</priority>\n` +
+      `  </url>`
+    );
+  }
+
+  const articleRoutes = await articleShareRoutes();
+  for (const route of articleRoutes) {
+    const filePath = path.join(ROOT, "articoli", route, "index.html");
+    const stat = await fs.stat(filePath);
+    const lastmod = formatDate(stat.mtime);
+    const loc = `https://${domain}/articoli/${route}/`;
+
+    entries.push(
+      `  <url>\n` +
+      `    <loc>${xmlEscape(loc)}</loc>\n` +
+      `    <lastmod>${lastmod}</lastmod>\n` +
+      `    <changefreq>weekly</changefreq>\n` +
+      `    <priority>0.7</priority>\n` +
       `  </url>`
     );
   }

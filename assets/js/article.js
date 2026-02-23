@@ -65,7 +65,10 @@ function renderArticle(article) {
 
 async function bootstrap() {
   const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
+  const pathMatch = window.location.pathname.match(/^\/articoli\/([^/]+)\/?$/);
+  const pathId = pathMatch ? decodeURIComponent(pathMatch[1]).split("-")[0] : "";
+  const bodyId = document.body?.dataset?.articleId || "";
+  const id = params.get("id") || pathId || bodyId;
   if (!id) {
     container.innerHTML = '<p class="text-lg font-semibold">Articolo non trovato.</p>';
     return;
@@ -81,7 +84,8 @@ async function bootstrap() {
     }
 
     const expectedSlug = slugifyArticleTitle(article.title);
-    if (expectedSlug && params.get("slug") !== expectedSlug) {
+    const isQueryRoute = window.location.pathname === "/article/" || window.location.pathname === "/article";
+    if (isQueryRoute && expectedSlug && params.get("slug") !== expectedSlug) {
       params.set("slug", expectedSlug);
       history.replaceState(null, "", `/article/?${params.toString()}`);
     }

@@ -54,4 +54,28 @@
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://scola-mia.com/articoli/5111ff7f-2555-4030-b960-e72c524d6a4e-sciopero-degli-studenti-del-23-02-2026/</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/articoli/52065fe7-6442-4507-b001-e9c4e4d2a344-articolo-prova-2/</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/articoli/7135449f-fd3f-4bd0-960f-15ee639ca971-articolo-prova-1/</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/articoli/9d056b37-cacf-4c49-879e-d312fb4ef31f-presentazione-sito/</loc>
+    <lastmod>2026-02-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>

@@ -26,17 +26,18 @@ jobs:
       - name: Generate sitemap.xml
         run: |
           node scripts/generate-pretty-routes.mjs
+          node scripts/generate-article-share-pages.mjs
           node scripts/generate-sitemap.mjs
 
       - name: Commit and push if changed
         run: |
-          if git diff --quiet -- sitemap.xml agenda/index.html agenda-detail/index.html archivio/index.html article/index.html contatti/index.html countdown/index.html countdown-detail/index.html ricerca/index.html admin/index.html admin-article-editor/index.html; then
+          if git diff --quiet -- sitemap.xml agenda/index.html agenda-detail/index.html archivio/index.html article/index.html contatti/index.html countdown/index.html countdown-detail/index.html ricerca/index.html admin/index.html admin-article-editor/index.html articoli; then
             echo "No sitemap changes"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add sitemap.xml agenda/index.html agenda-detail/index.html archivio/index.html article/index.html contatti/index.html countdown/index.html countdown-detail/index.html ricerca/index.html admin/index.html admin-article-editor/index.html
+          git add sitemap.xml agenda/index.html agenda-detail/index.html archivio/index.html article/index.html contatti/index.html countdown/index.html countdown-detail/index.html ricerca/index.html admin/index.html admin-article-editor/index.html articoli
           git commit -m "chore: auto-update sitemap and pretty routes"
           git push
