@@ -56,12 +56,12 @@ function featuredCard(article, index) {
 function agendaCard(item) {
   const dateLabel = formatLocalDate(item.date) || "Data da definire";
   return `
-    <article class="border-2 border-white p-4">
+    <a href="agenda-detail.html?id=${encodeURIComponent(item.id)}" class="block border-2 border-white p-4 hover:bg-white hover:text-black transition-colors">
       <p class="text-xs uppercase font-bold opacity-80">${item.category}</p>
       <h3 class="mt-1 font-semibold">${item.title}</h3>
       <p class="mt-2 text-xs uppercase font-bold">${dateLabel}</p>
-      <a class="inline-block mt-3 text-[11px] font-bold uppercase underline" href="agenda.html">Apri agenda</a>
-    </article>
+      <span class="inline-block mt-3 text-[11px] font-bold uppercase underline">Apri evento</span>
+    </a>
   `;
 }
 

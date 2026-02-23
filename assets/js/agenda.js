@@ -44,12 +44,13 @@ function render(query = "") {
 
   listEl.innerHTML = filtered.length
     ? filtered.map((event) => `
-        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+        <a href="agenda-detail.html?id=${encodeURIComponent(event.id)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs uppercase font-bold text-accent">${event.category}</p>
           <h3 class="mt-2 text-lg font-semibold">${event.title}</h3>
           <p class="mt-2 text-sm">${event.description}</p>
           <p class="mt-3 text-[11px] uppercase font-bold text-slate-500">${formatLocalDate(normalizeAgendaDateInput(event.date)) || "Data non valida"}</p>
-        </article>
+          <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri evento</span>
+        </a>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun evento trovato per questa ricerca.</div>';
 }

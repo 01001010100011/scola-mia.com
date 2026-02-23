@@ -56,6 +56,18 @@ export async function getAgendaEvents() {
   return data || [];
 }
 
+export async function getAgendaEventById(id) {
+  const { data, error } = await supabase
+    .from("agenda_events")
+    .select("id,title,category,date,description,created_at,updated_at")
+    .eq("id", id)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data || null;
+}
+
 export async function getCountdownEvents() {
   const nowIso = new Date().toISOString();
   const { data, error } = await supabase
