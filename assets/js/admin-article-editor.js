@@ -1,4 +1,5 @@
 import { escapeHtml, supabase, toSlugSafeName } from "./supabase-client.js";
+import { markdownToHtml } from "./markdown.js";
 
 const BUCKET = "article-media";
 
@@ -17,6 +18,7 @@ const categoryInput = document.getElementById("category");
 const authorNameInput = document.getElementById("authorName");
 const excerptInput = document.getElementById("excerpt");
 const contentInput = document.getElementById("content");
+const markdownPreview = document.getElementById("markdownPreview");
 const creditAuthorInput = document.getElementById("creditAuthor");
 const creditPhotosInput = document.getElementById("creditPhotos");
 const creditDirectorInput = document.getElementById("creditDirector");
@@ -110,6 +112,16 @@ function syncContext() {
   const status = currentPublished ? "Online" : "Bozza";
   contextTitle.textContent = titleInput.value.trim() || (articleIdInput.value ? "Articolo in modifica" : "Nuovo articolo");
   contextMeta.textContent = `ID: ${id} | Stato: ${status}`;
+}
+
+function renderMarkdownPreview() {
+  if (!markdownPreview) return;
+  const markdown = contentInput.value.trim();
+  if (!markdown) {
+    markdownPreview.innerHTML = '<p class="text-sm text-slate-600">Anteprima vuota: inizia a scrivere contenuto Markdown per vedere il risultato.</p>';
+    return;
+  }
+  markdownPreview.innerHTML = markdownToHtml(markdown);
 }
 
 function updateActionButtons() {
@@ -303,6 +315,7 @@ function mapRecordToForm(record) {
 
   updateActionButtons();
   syncContext();
+  renderMarkdownPreview();
 }
 
 function resetToNew() {
@@ -323,6 +336,7 @@ function resetToNew() {
 
   updateActionButtons();
   syncContext();
+  renderMarkdownPreview();
 }
 
 async function loadArticle(id) {
@@ -456,6 +470,9 @@ cancelBtn.addEventListener("click", () => {
   node.addEventListener("input", syncContext);
   node.addEventListener("change", syncContext);
 });
+
+contentInput.addEventListener("input", renderMarkdownPreview);
+contentInput.addEventListener("change", renderMarkdownPreview);
 
 async function saveArticle(targetPublished) {
   if (isSaving) return;
