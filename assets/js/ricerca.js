@@ -76,45 +76,48 @@ function render(query = "") {
 
   articleResultsEl.innerHTML = articleResults.length
     ? articleResults.map((item) => `
-        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+        <a href="${buildArticleUrl(item.id, item.title)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           ${item.image_url ? `<div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${item.image_url}" alt="Immagine ${item.title}" class="w-full h-full object-cover" /></div>` : ""}
           <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
           <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
           <p class="mt-2 text-sm">${item.excerpt}</p>
-          <a href="${buildArticleUrl(item.id, item.title)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Apri</a>
-        </article>
+          <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri</span>
+        </a>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun articolo trovato.</div>';
 
   agendaResultsEl.innerHTML = agendaResults.length
-    ? agendaResults.map((item) => `
-        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+    ? agendaResults.map((item) => {
+      const agendaUrl = item.id ? `/agenda-detail/?id=${encodeURIComponent(item.id)}` : "/agenda/";
+      return `
+        <a href="${agendaUrl}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
           <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
           <p class="mt-2 text-sm">${item.description}</p>
           <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida"}</p>
-          <a href="/agenda/" class="inline-block mt-3 text-xs font-bold uppercase underline">Vai agenda</a>
-        </article>
-      `).join("")
+          <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri evento</span>
+        </a>
+      `;
+    }).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun evento trovato.</div>';
 
   countdownResultsEl.innerHTML = countdownResults.length
     ? countdownResults.map((item) => `
-        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+        <a href="/countdown-detail/?id=${encodeURIComponent(item.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">Countdown</p>
           <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
           <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatTargetDate(item.target_at)}</p>
-          <a href="/countdown-detail/?id=${encodeURIComponent(item.slug)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Apri dettaglio</a>
-        </article>
+          <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri dettaglio</span>
+        </a>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun countdown trovato.</div>';
 
   contactResultsEl.innerHTML = contactResults.length
     ? contactResults.map((item) => `
-        <article class="border-2 border-black bg-white p-4 shadow-brutal">
+        <a href="${item.href}" ${item.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">${item.label}</p>
-          <a href="${item.href}" ${item.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="mt-2 inline-block font-semibold underline">${item.value}</a>
-        </article>
+          <span class="mt-2 inline-block font-semibold underline">${item.value}</span>
+        </a>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun contatto trovato.</div>';
 }
