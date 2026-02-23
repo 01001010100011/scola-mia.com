@@ -114,6 +114,7 @@ async function bootstrap() {
 
   const params = new URLSearchParams(window.location.search);
   const initialQuery = params.get("q") || "";
+  const shouldFocus = params.get("focus") === "1";
   searchInput.value = initialQuery;
 
   document.getElementById("searchForm").addEventListener("submit", (event) => {
@@ -126,6 +127,13 @@ async function bootstrap() {
 
   searchInput.addEventListener("input", () => render(searchInput.value));
   render(initialQuery);
+
+  if (shouldFocus) {
+    requestAnimationFrame(() => {
+      searchInput.focus();
+      searchInput.select();
+    });
+  }
 }
 
 bootstrap();
