@@ -324,7 +324,12 @@ async function loadArticle(id) {
 }
 
 function isMissingColumnError(error) {
-  return (error?.code || "") === "42703";
+  const code = String(error?.code || "");
+  const message = String(error?.message || "").toLowerCase();
+  return code === "42703"
+    || code === "PGRST204"
+    || message.includes("schema cache")
+    || message.includes("could not find the 'credit_");
 }
 
 async function bootstrap() {
@@ -487,14 +492,19 @@ async function saveArticle(targetPublished) {
       }
     }
 
+    const creditAuthor = cleanPlainText(creditAuthorInput.value) || null;
+    const creditPhotos = cleanPlainText(creditPhotosInput.value) || null;
+    const creditDirector = cleanPlainText(creditDirectorInput.value) || null;
+    const hasCreditsInput = Boolean(creditAuthor || creditPhotos || creditDirector);
+
     const fullPayload = {
       title: titleInput.value.trim(),
       category: categoryInput.value.trim(),
       excerpt: excerptInput.value.trim(),
       content: contentInput.value.trim(),
-      credit_author: cleanPlainText(creditAuthorInput.value) || null,
-      credit_photos: cleanPlainText(creditPhotosInput.value) || null,
-      credit_director: cleanPlainText(creditDirectorInput.value) || null,
+      credit_author: creditAuthor,
+      credit_photos: creditPhotos,
+      credit_director: creditDirector,
       image_url: imageUrl || null,
       image_path: imagePath || null,
       attachments,
@@ -524,6 +534,9 @@ async function saveArticle(targetPublished) {
         .select(ARTICLE_SELECT_FIELDS)
         .single();
       if (error && isMissingColumnError(error)) {
+        if (hasCreditsInput) {
+          throw new Error("I campi crediti non sono ancora attivi nel database Supabase. Esegui la migrazione SQL 'supabase/add_article_credits_fields.sql' e riprova.");
+        }
         ({ data, error } = await supabase
           .from("articles")
           .update(legacyPayload)
@@ -540,6 +553,9 @@ async function saveArticle(targetPublished) {
         .select(ARTICLE_SELECT_FIELDS)
         .single();
       if (error && isMissingColumnError(error)) {
+        if (hasCreditsInput) {
+          throw new Error("I campi crediti non sono ancora attivi nel database Supabase. Esegui la migrazione SQL 'supabase/add_article_credits_fields.sql' e riprova.");
+        }
         ({ data, error } = await supabase
           .from("articles")
           .insert({ id, ...legacyPayload, created_at: now })
