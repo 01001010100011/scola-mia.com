@@ -40,7 +40,7 @@ const MAX_IMAGE_WIDTH = 1920;
 const MAX_IMAGE_HEIGHT = 1080;
 const OUTPUT_IMAGE_TYPE = "image/jpeg";
 const OUTPUT_IMAGE_QUALITY = 0.9;
-const ARTICLE_SELECT_FIELDS = "id,title,category,excerpt,content,image_url,image_path,published,attachments,credit_author,credit_photos,credit_director,created_at,updated_at";
+const ARTICLE_SELECT_FIELDS = "*";
 
 function setError(message = "") {
   if (!message) {
@@ -323,6 +323,10 @@ async function loadArticle(id) {
   return data || null;
 }
 
+function isMissingColumnError(error) {
+  return (error?.code || "") === "42703";
+}
+
 async function bootstrap() {
   setError("");
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -483,7 +487,7 @@ async function saveArticle(targetPublished) {
       }
     }
 
-    const payload = {
+    const fullPayload = {
       title: titleInput.value.trim(),
       category: categoryInput.value.trim(),
       excerpt: excerptInput.value.trim(),
@@ -498,23 +502,50 @@ async function saveArticle(targetPublished) {
       updated_at: now
     };
 
+    const legacyPayload = {
+      title: fullPayload.title,
+      category: fullPayload.category,
+      excerpt: fullPayload.excerpt,
+      content: fullPayload.content,
+      image_url: fullPayload.image_url,
+      image_path: fullPayload.image_path,
+      attachments: fullPayload.attachments,
+      published: fullPayload.published,
+      updated_at: fullPayload.updated_at
+    };
+
     let saved = null;
 
     if (articleIdInput.value) {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("articles")
-        .update(payload)
+        .update(fullPayload)
         .eq("id", id)
         .select(ARTICLE_SELECT_FIELDS)
         .single();
+      if (error && isMissingColumnError(error)) {
+        ({ data, error } = await supabase
+          .from("articles")
+          .update(legacyPayload)
+          .eq("id", id)
+          .select(ARTICLE_SELECT_FIELDS)
+          .single());
+      }
       if (error) throw error;
       saved = data;
     } else {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("articles")
-        .insert({ id, ...payload, created_at: now })
+        .insert({ id, ...fullPayload, created_at: now })
         .select(ARTICLE_SELECT_FIELDS)
         .single();
+      if (error && isMissingColumnError(error)) {
+        ({ data, error } = await supabase
+          .from("articles")
+          .insert({ id, ...legacyPayload, created_at: now })
+          .select(ARTICLE_SELECT_FIELDS)
+          .single());
+      }
       if (error) throw error;
       saved = data;
       history.replaceState(null, "", `/admin-article-editor/?id=${encodeURIComponent(saved.id)}`);

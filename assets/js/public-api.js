@@ -10,7 +10,7 @@ export const CONTACTS = [
 export async function getPublishedArticles() {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,category,excerpt,content,image_url,published,created_at,updated_at,attachments,credit_author,credit_photos,credit_director")
+    .select("*")
     .eq("published", true)
     .order("updated_at", { ascending: false });
 
@@ -21,7 +21,7 @@ export async function getPublishedArticles() {
 export async function getArticleById(id, includeUnpublished = false) {
   let query = supabase
     .from("articles")
-    .select("id,title,category,excerpt,content,image_url,published,created_at,updated_at,attachments,credit_author,credit_photos,credit_director")
+    .select("*")
     .eq("id", id)
     .limit(1)
     .maybeSingle();
