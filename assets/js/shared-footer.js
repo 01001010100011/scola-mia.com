@@ -13,6 +13,15 @@ const FOOTER_HTML = `
 function renderSharedFooter() {
   if (document.body?.dataset?.noSharedFooter === "true") return;
 
+  // Keep footer pinned to bottom on short pages (mobile + desktop).
+  document.body.style.minHeight = "100vh";
+  document.body.style.display = "flex";
+  document.body.style.flexDirection = "column";
+  const main = document.querySelector("main");
+  if (main) {
+    main.style.flex = "1";
+  }
+
   const mount = document.querySelector("[data-shared-footer-mount]");
   if (mount) {
     mount.innerHTML = FOOTER_HTML;
