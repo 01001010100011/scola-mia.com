@@ -9,7 +9,7 @@ function renderCreditsSection(article) {
   const creditRows = [
     { label: "Articolo redatto da", value: article.credit_author },
     { label: "Foto / Grafiche", value: article.credit_photos },
-    { label: "Direzione responsabile", value: article.credit_director }
+    { label: "Direttore responsabile", value: article.credit_director }
   ].filter((item) => String(item.value || "").trim());
 
   if (!creditRows.length) return "";
