@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Keep admin surfaces out of search results
-Disallow: /admin.html
-Disallow: /admin-article-editor.html
+Disallow: /admin/
+Disallow: /admin-article-editor/
 
 Sitemap: https://scola-mia.com/sitemap.xml

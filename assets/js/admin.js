@@ -277,7 +277,7 @@ function articleRow(article) {
           <p class="text-xs mt-2">Ultimo aggiornamento: ${new Date(article.updated_at).toLocaleString("it-IT")} | Stato: <span class="font-bold ${statusClass}">${statusLabel}</span></p>
         </div>
         <div class="flex flex-wrap gap-2 md:justify-end">
-          <a href="admin-article-editor.html?id=${encodeURIComponent(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</a>
+          <a href="/admin-article-editor/?id=${encodeURIComponent(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</a>
           <button data-article-action="toggle" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">${article.published ? "Sposta in bozze" : "Pubblica"}</button>
           <button data-article-action="delete" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
         </div>
@@ -632,7 +632,7 @@ openFeaturedViewBtn?.addEventListener("click", (event) => {
 newItemBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   if (currentSection === "articles") {
-    window.location.href = "admin-article-editor.html?mode=new";
+    window.location.href = "/admin-article-editor/?mode=new";
     return;
   }
   if (currentSection === "countdown") {

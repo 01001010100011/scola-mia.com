@@ -61,7 +61,7 @@ async function bootstrap() {
   document.getElementById("archiveSearchForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const query = searchInput.value.trim();
-    const url = query ? `archivio.html?q=${encodeURIComponent(query)}` : "archivio.html";
+    const url = query ? `/archivio/?q=${encodeURIComponent(query)}` : "/archivio/";
     history.replaceState(null, "", url);
     render(query);
   });

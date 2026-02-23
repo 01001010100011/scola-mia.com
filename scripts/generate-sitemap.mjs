@@ -10,14 +10,14 @@ const INDEX_CHANGEFREQ = "daily";
 const DEFAULT_CHANGEFREQ = "weekly";
 
 const PAGE_RULES = {
-  "archivio.html": { changefreq: "daily", priority: "0.9" },
-  "article.html": { changefreq: "daily", priority: "0.8" },
-  "countdown.html": { changefreq: "daily", priority: "0.8" },
-  "countdown-detail.html": { changefreq: "daily", priority: "0.7" },
-  "agenda.html": { changefreq: "daily", priority: "0.8" },
-  "agenda-detail.html": { changefreq: "daily", priority: "0.7" },
-  "contatti.html": { changefreq: "weekly", priority: "0.7" },
-  "ricerca.html": { changefreq: "weekly", priority: "0.6" }
+  "archivio": { changefreq: "daily", priority: "0.9" },
+  "article": { changefreq: "daily", priority: "0.8" },
+  "countdown": { changefreq: "daily", priority: "0.8" },
+  "countdown-detail": { changefreq: "daily", priority: "0.7" },
+  "agenda": { changefreq: "daily", priority: "0.8" },
+  "agenda-detail": { changefreq: "daily", priority: "0.7" },
+  "contatti": { changefreq: "weekly", priority: "0.7" },
+  "ricerca": { changefreq: "weekly", priority: "0.6" }
 };
 
 function formatDate(date) {
@@ -34,16 +34,8 @@ async function resolveDomain() {
   }
 }
 
-function isPublicHtmlPage(fileName) {
-  if (!fileName.endsWith(".html")) return false;
-  if (fileName === "404.html") return false;
-  if (/^admin(?:-.*)?\.html$/i.test(fileName)) return false;
-  return true;
-}
-
-function toUrlPath(fileName) {
-  if (fileName === "index.html") return "/";
-  return `/${fileName}`;
+function publicRouteFolders() {
+  return ["archivio", "article", "countdown", "countdown-detail", "agenda", "agenda-detail", "contatti", "ricerca"];
 }
 
 function xmlEscape(value) {
@@ -57,18 +49,25 @@ function xmlEscape(value) {
 
 async function buildSitemap() {
   const domain = await resolveDomain();
-  const files = await fs.readdir(ROOT);
-  const htmlFiles = files.filter(isPublicHtmlPage).sort();
-
   const entries = [];
-  for (const fileName of htmlFiles) {
-    const filePath = path.join(ROOT, fileName);
+  const indexStat = await fs.stat(path.join(ROOT, "index.html"));
+  entries.push(
+    `  <url>\n` +
+    `    <loc>${xmlEscape(`https://${domain}/`)}</loc>\n` +
+    `    <lastmod>${formatDate(indexStat.mtime)}</lastmod>\n` +
+    `    <changefreq>${INDEX_CHANGEFREQ}</changefreq>\n` +
+    `    <priority>${INDEX_PRIORITY}</priority>\n` +
+    `  </url>`
+  );
+
+  for (const route of publicRouteFolders()) {
+    const filePath = path.join(ROOT, route, "index.html");
     const stat = await fs.stat(filePath);
     const lastmod = formatDate(stat.mtime);
-    const rule = PAGE_RULES[fileName];
-    const loc = `https://${domain}${toUrlPath(fileName)}`;
-    const changefreq = fileName === "index.html" ? INDEX_CHANGEFREQ : rule?.changefreq || DEFAULT_CHANGEFREQ;
-    const priority = fileName === "index.html" ? INDEX_PRIORITY : rule?.priority || DEFAULT_PRIORITY;
+    const rule = PAGE_RULES[route];
+    const loc = `https://${domain}/${route}/`;
+    const changefreq = rule?.changefreq || DEFAULT_CHANGEFREQ;
+    const priority = rule?.priority || DEFAULT_PRIORITY;
 
     entries.push(
       `  <url>\n` +

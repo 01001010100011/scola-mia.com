@@ -13,5 +13,5 @@ export function buildArticleUrl(id, title) {
   params.set("id", String(id || ""));
   const slug = slugifyArticleTitle(title);
   if (slug) params.set("slug", slug);
-  return `article.html?${params.toString()}`;
+  return `/article/?${params.toString()}`;
 }

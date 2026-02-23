@@ -44,7 +44,7 @@ function render(query = "") {
 
   listEl.innerHTML = filtered.length
     ? filtered.map((event) => `
-        <a href="agenda-detail.html?id=${encodeURIComponent(event.id)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+        <a href="/agenda-detail/?id=${encodeURIComponent(event.id)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs uppercase font-bold text-accent">${event.category}</p>
           <h3 class="mt-2 text-lg font-semibold">${event.title}</h3>
           <p class="mt-2 text-sm">${event.description}</p>
@@ -72,7 +72,7 @@ async function bootstrap() {
   document.getElementById("agendaSearchForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const query = searchInput.value.trim();
-    const url = query ? `agenda.html?q=${encodeURIComponent(query)}` : "agenda.html";
+    const url = query ? `/agenda/?q=${encodeURIComponent(query)}` : "/agenda/";
     history.replaceState(null, "", url);
     render(query);
   });

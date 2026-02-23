@@ -58,7 +58,7 @@ async function bootstrap() {
     const expectedSlug = slugifyArticleTitle(article.title);
     if (expectedSlug && params.get("slug") !== expectedSlug) {
       params.set("slug", expectedSlug);
-      history.replaceState(null, "", `article.html?${params.toString()}`);
+      history.replaceState(null, "", `/article/?${params.toString()}`);
     }
 
     renderArticle(article);

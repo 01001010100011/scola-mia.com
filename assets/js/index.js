@@ -56,7 +56,7 @@ function featuredCard(article, index) {
 function agendaCard(item) {
   const dateLabel = formatLocalDate(item.date) || "Data da definire";
   return `
-    <a href="agenda-detail.html?id=${encodeURIComponent(item.id)}" class="block border-2 border-white p-4 hover:bg-white hover:text-black transition-colors">
+    <a href="/agenda-detail/?id=${encodeURIComponent(item.id)}" class="block border-2 border-white p-4 hover:bg-white hover:text-black transition-colors">
       <p class="text-xs uppercase font-bold opacity-80">${item.category}</p>
       <h3 class="mt-1 font-semibold">${item.title}</h3>
       <p class="mt-2 text-xs uppercase font-bold">${dateLabel}</p>
@@ -71,7 +71,7 @@ function sortByTargetDate(events) {
 
 function countdownHomeFeaturedCard(event) {
   return `
-    <a href="countdown-detail.html?id=${encodeURIComponent(event.slug)}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
+    <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
       <p class="text-xs uppercase font-bold tracking-wide opacity-80">Countdown principale</p>
       <h3 class="headline text-6xl mt-2">${event.title}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-4 text-2xl font-bold">${formatCountdown(event.target_at)}</p>
@@ -82,7 +82,7 @@ function countdownHomeFeaturedCard(event) {
 
 function countdownHomeCard(event) {
   return `
-    <a href="countdown-detail.html?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
+    <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
       <h3 class="headline text-4xl mt-1">${event.title}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-3 text-lg font-bold">${formatCountdown(event.target_at)}</p>
       <p class="mt-2 text-xs uppercase font-semibold text-slate-500">${formatTargetDate(event.target_at)}</p>
@@ -224,7 +224,7 @@ async function renderHome() {
 document.getElementById("homeSearchForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const query = document.getElementById("homeSearchInput").value.trim();
-  const url = query ? `ricerca.html?q=${encodeURIComponent(query)}` : "ricerca.html";
+  const url = query ? `/ricerca/?q=${encodeURIComponent(query)}` : "/ricerca/";
   window.location.href = url;
 });
 

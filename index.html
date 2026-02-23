@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>scola-mia.com - Home</title>
-  <link rel="icon" type="image/svg+xml" href="assets/favicon-scola-mia.svg" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-scola-mia.svg" />
   <meta name="description" content="Blog scolastico ufficiale con notizie, compiti, progetti e articoli creati dagli admin." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -55,9 +55,9 @@
   <div class="min-h-screen flex flex-col">
     <header class="sticky top-0 z-50 bg-paper border-b-4 border-black">
       <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        <a href="index.html" class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-3">
           <div class="border-2 border-black bg-white w-10 h-10 overflow-hidden">
-            <img src="assets/logo-scola-mia.svg" alt="Logo scola-mia.com" class="w-full h-full object-cover" />
+            <img src="/assets/logo-scola-mia.svg" alt="Logo scola-mia.com" class="w-full h-full object-cover" />
           </div>
           <div>
             <p class="headline text-3xl leading-none">scola-mia.com</p>
@@ -65,18 +65,18 @@
           </div>
         </a>
         <nav class="hidden lg:flex items-center gap-6 text-sm font-bold uppercase justify-self-center">
-          <a href="index.html" class="hover:text-accent">Home</a>
-          <a href="archivio.html" class="hover:text-accent">Articoli</a>
-          <a href="countdown.html" class="hover:text-accent">Countdown</a>
-          <a href="agenda.html" class="hover:text-accent">Agenda</a>
-          <a href="contatti.html" class="hover:text-accent">Contatti</a>
+          <a href="/" class="hover:text-accent">Home</a>
+          <a href="/archivio/" class="hover:text-accent">Articoli</a>
+          <a href="/countdown/" class="hover:text-accent">Countdown</a>
+          <a href="/agenda/" class="hover:text-accent">Agenda</a>
+          <a href="/contatti/" class="hover:text-accent">Contatti</a>
         </nav>
         <div class="flex items-center justify-end min-w-[44px] gap-2 lg:justify-self-end">
           <form id="homeSearchForm" class="hidden lg:flex items-center border-2 border-black bg-white">
             <span class="material-symbols-outlined text-base px-2">search</span>
             <input id="homeSearchInput" type="search" placeholder="Cerca ovunque" class="border-0 focus:ring-0 text-xs font-semibold py-2 w-32 md:w-44" />
           </form>
-          <a href="ricerca.html" class="lg:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri ricerca universale">
+          <a href="/ricerca/" class="lg:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri ricerca universale">
             <span class="material-symbols-outlined block">search</span>
           </a>
           <button id="mobileMenuBtn" type="button" class="lg:hidden border-2 border-black bg-white p-2 shadow-brutal" aria-label="Apri menu" aria-controls="mobileMenuBackdrop" aria-expanded="false">
@@ -95,11 +95,11 @@
           </button>
         </div>
         <nav class="mt-6 grid gap-2 text-xs font-bold uppercase">
-          <a href="index.html" class="border-2 border-black bg-white px-3 py-2">Home</a>
-          <a href="archivio.html" class="border-2 border-black bg-white px-3 py-2">Archivio</a>
-          <a href="countdown.html" class="border-2 border-black bg-white px-3 py-2">Countdown</a>
-          <a href="agenda.html" class="border-2 border-black bg-white px-3 py-2">Agenda</a>
-          <a href="contatti.html" class="border-2 border-black bg-white px-3 py-2">Contatti</a>
+          <a href="/" class="border-2 border-black bg-white px-3 py-2">Home</a>
+          <a href="/archivio/" class="border-2 border-black bg-white px-3 py-2">Archivio</a>
+          <a href="/countdown/" class="border-2 border-black bg-white px-3 py-2">Countdown</a>
+          <a href="/agenda/" class="border-2 border-black bg-white px-3 py-2">Agenda</a>
+          <a href="/contatti/" class="border-2 border-black bg-white px-3 py-2">Contatti</a>
         </nav>
       </aside>
     </div>
@@ -112,7 +112,7 @@
               <h1 class="headline text-9xl md:text-[13rem] mt-1 leading-[0.82]">Scola Mia</h1>
               <p class="mt-5 max-w-2xl text-lg md:text-xl font-semibold">Il giornale indipendente del liceo L. Rocci, creato dagli studenti per gli studenti.</p>
               <div class="mt-7 flex flex-wrap gap-3">
-                <a id="presentationArticleBtn" href="article.html?id=9d056b37-cacf-4c49-879e-d312fb4ef31f" class="border-2 border-black bg-accent text-white px-5 py-2.5 text-sm font-bold uppercase shadow-brutal lift transition-all">Presentazione Sito</a>
+                <a id="presentationArticleBtn" href="/article/?id=9d056b37-cacf-4c49-879e-d312fb4ef31f" class="border-2 border-black bg-accent text-white px-5 py-2.5 text-sm font-bold uppercase shadow-brutal lift transition-all">Presentazione Sito</a>
               </div>
             </div>
             <div class="lg:col-span-2 bg-black text-white p-6 md:p-8">
@@ -126,7 +126,7 @@
       <section id="articoli" class="max-w-7xl mx-auto px-4 md:px-8 pb-8">
         <div class="flex items-end justify-between gap-4 mb-5">
           <h2 class="headline text-5xl">Ultimi articoli</h2>
-          <a href="archivio.html" class="text-xs font-bold uppercase underline decoration-2">Vedi archivio</a>
+          <a href="/archivio/" class="text-xs font-bold uppercase underline decoration-2">Vedi archivio</a>
         </div>
         <div id="articlesGrid" class="grid md:grid-cols-3 gap-5"></div>
       </section>
@@ -134,7 +134,7 @@
       <section id="countdownHome" class="max-w-7xl mx-auto px-4 md:px-8 pb-8">
         <div class="flex items-end justify-between gap-4 mb-5">
           <h2 class="headline text-5xl">Countdown</h2>
-          <a href="countdown.html" class="text-xs font-bold uppercase underline decoration-2">Vedi tutti</a>
+          <a href="/countdown/" class="text-xs font-bold uppercase underline decoration-2">Vedi tutti</a>
         </div>
         <div class="grid lg:grid-cols-3 gap-5">
           <div id="homeCountdownFeatured" class="lg:col-span-2"></div>
@@ -144,7 +144,7 @@
 
       <section id="eventi" class="max-w-7xl mx-auto px-4 md:px-8 pb-12">
         <div class="mb-4 flex justify-end">
-          <a href="agenda.html" class="border-2 border-black bg-white px-4 py-2 text-xs font-bold uppercase shadow-brutal lift transition-all">Vai all'agenda completa</a>
+          <a href="/agenda/" class="border-2 border-black bg-white px-4 py-2 text-xs font-bold uppercase shadow-brutal lift transition-all">Vai all'agenda completa</a>
         </div>
         <div class="border-4 border-black bg-accent text-white shadow-brutal p-6 md:p-8">
           <h2 class="headline text-5xl">Agenda scuola</h2>
@@ -156,9 +156,9 @@
     <div data-shared-footer-mount></div>
   </div>
 
-  <script type="module" src="assets/js/page-label.js"></script>
-  <script type="module" src="assets/js/mobile-nav.js"></script>
-  <script type="module" src="assets/js/shared-footer.js"></script>
-  <script type="module" src="assets/js/index.js"></script>
+  <script type="module" src="/assets/js/page-label.js"></script>
+  <script type="module" src="/assets/js/mobile-nav.js"></script>
+  <script type="module" src="/assets/js/shared-footer.js"></script>
+  <script type="module" src="/assets/js/index.js"></script>
 </body>
 </html>

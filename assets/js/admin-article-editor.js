@@ -207,14 +207,14 @@ async function bootstrap() {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
   if (!sessionData?.session) {
-    window.location.href = "admin.html";
+    window.location.href = "/admin/";
     return;
   }
 
   const isAdmin = await ensureCurrentUserIsAdmin();
   if (!isAdmin) {
     await supabase.auth.signOut({ scope: "local" });
-    window.location.href = "admin.html";
+    window.location.href = "/admin/";
     return;
   }
 
@@ -383,7 +383,7 @@ async function saveArticle(targetPublished) {
         .single();
       if (error) throw error;
       saved = data;
-      history.replaceState(null, "", `admin-article-editor.html?id=${encodeURIComponent(saved.id)}`);
+      history.replaceState(null, "", `/admin-article-editor/?id=${encodeURIComponent(saved.id)}`);
     }
 
     originalRecord = structuredClone(saved);

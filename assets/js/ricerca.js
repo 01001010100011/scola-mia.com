@@ -71,7 +71,7 @@ function render(query = "") {
           <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
           <p class="mt-2 text-sm">${item.description}</p>
           <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida"}</p>
-          <a href="agenda.html" class="inline-block mt-3 text-xs font-bold uppercase underline">Vai agenda</a>
+          <a href="/agenda/" class="inline-block mt-3 text-xs font-bold uppercase underline">Vai agenda</a>
         </article>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun evento trovato.</div>';
@@ -82,7 +82,7 @@ function render(query = "") {
           <p class="text-xs font-bold uppercase text-accent">Countdown</p>
           <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
           <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatTargetDate(item.target_at)}</p>
-          <a href="countdown-detail.html?id=${encodeURIComponent(item.slug)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Apri dettaglio</a>
+          <a href="/countdown-detail/?id=${encodeURIComponent(item.slug)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Apri dettaglio</a>
         </article>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun countdown trovato.</div>';
@@ -119,7 +119,7 @@ async function bootstrap() {
   document.getElementById("searchForm").addEventListener("submit", (event) => {
     event.preventDefault();
     const query = searchInput.value.trim();
-    const url = query ? `ricerca.html?q=${encodeURIComponent(query)}` : "ricerca.html";
+    const url = query ? `/ricerca/?q=${encodeURIComponent(query)}` : "/ricerca/";
     history.replaceState(null, "", url);
     render(query);
   });
