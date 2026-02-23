@@ -16,6 +16,9 @@ const titleInput = document.getElementById("title");
 const categoryInput = document.getElementById("category");
 const excerptInput = document.getElementById("excerpt");
 const contentInput = document.getElementById("content");
+const creditAuthorInput = document.getElementById("creditAuthor");
+const creditPhotosInput = document.getElementById("creditPhotos");
+const creditDirectorInput = document.getElementById("creditDirector");
 
 const articleImageInput = document.getElementById("articleImageInput");
 const articleImagePreview = document.getElementById("articleImagePreview");
@@ -37,6 +40,7 @@ const MAX_IMAGE_WIDTH = 1920;
 const MAX_IMAGE_HEIGHT = 1080;
 const OUTPUT_IMAGE_TYPE = "image/jpeg";
 const OUTPUT_IMAGE_QUALITY = 0.9;
+const ARTICLE_SELECT_FIELDS = "id,title,category,excerpt,content,image_url,image_path,published,attachments,credit_author,credit_photos,credit_director,created_at,updated_at";
 
 function setError(message = "") {
   if (!message) {
@@ -111,6 +115,14 @@ function updateActionButtons() {
   const hasId = Boolean(articleIdInput.value);
   saveDraftBtn.textContent = currentPublished ? "Sposta nelle bozze" : "Salva nelle bozze";
   publishBtn.textContent = currentPublished && hasId ? "Aggiorna articolo" : "Pubblica articolo";
+}
+
+function cleanPlainText(value) {
+  return String(value || "")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[<>]/g, "")
+    .trim();
 }
 
 function setSavingState(saving) {
@@ -260,6 +272,9 @@ function mapRecordToForm(record) {
   categoryInput.value = record.category || "";
   excerptInput.value = record.excerpt || "";
   contentInput.value = record.content || "";
+  creditAuthorInput.value = record.credit_author || "";
+  creditPhotosInput.value = record.credit_photos || "";
+  creditDirectorInput.value = record.credit_director || "";
   currentPublished = Boolean(record.published);
 
   currentArticleImageUrl = record.image_url || "";
@@ -299,7 +314,7 @@ function resetToNew() {
 async function loadArticle(id) {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,category,excerpt,content,image_url,image_path,published,attachments,created_at,updated_at")
+    .select(ARTICLE_SELECT_FIELDS)
     .eq("id", id)
     .limit(1)
     .maybeSingle();
@@ -414,7 +429,7 @@ cancelBtn.addEventListener("click", () => {
   resetToNew();
 });
 
-[titleInput, categoryInput, excerptInput, contentInput].forEach((node) => {
+[titleInput, categoryInput, excerptInput, contentInput, creditAuthorInput, creditPhotosInput, creditDirectorInput].forEach((node) => {
   node.addEventListener("input", syncContext);
   node.addEventListener("change", syncContext);
 });
@@ -473,6 +488,9 @@ async function saveArticle(targetPublished) {
       category: categoryInput.value.trim(),
       excerpt: excerptInput.value.trim(),
       content: contentInput.value.trim(),
+      credit_author: cleanPlainText(creditAuthorInput.value) || null,
+      credit_photos: cleanPlainText(creditPhotosInput.value) || null,
+      credit_director: cleanPlainText(creditDirectorInput.value) || null,
       image_url: imageUrl || null,
       image_path: imagePath || null,
       attachments,
@@ -487,7 +505,7 @@ async function saveArticle(targetPublished) {
         .from("articles")
         .update(payload)
         .eq("id", id)
-        .select("id,title,category,excerpt,content,image_url,image_path,published,attachments,created_at,updated_at")
+        .select(ARTICLE_SELECT_FIELDS)
         .single();
       if (error) throw error;
       saved = data;
@@ -495,7 +513,7 @@ async function saveArticle(targetPublished) {
       const { data, error } = await supabase
         .from("articles")
         .insert({ id, ...payload, created_at: now })
-        .select("id,title,category,excerpt,content,image_url,image_path,published,attachments,created_at,updated_at")
+        .select(ARTICLE_SELECT_FIELDS)
         .single();
       if (error) throw error;
       saved = data;

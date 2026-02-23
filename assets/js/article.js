@@ -4,6 +4,27 @@ import { slugifyArticleTitle } from "./article-url.js";
 
 const container = document.getElementById("articleContainer");
 
+function renderCreditsSection(article) {
+  const creditRows = [
+    { label: "Articolo redatto da", value: article.credit_author },
+    { label: "Foto / Grafiche", value: article.credit_photos },
+    { label: "Direzione responsabile", value: article.credit_director }
+  ].filter((item) => String(item.value || "").trim());
+
+  if (!creditRows.length) return "";
+
+  return `
+    <section class="mt-8 pt-5 border-t border-black/40 text-[0.9rem] leading-6 text-ink">
+      ${creditRows.map((item) => `
+        <div class="mb-4 last:mb-0 text-left">
+          <p class="font-semibold">${escapeHtml(item.label)}</p>
+          <p>${escapeHtml(item.value)}</p>
+        </div>
+      `).join("")}
+    </section>
+  `;
+}
+
 async function isAuthenticated() {
   const { data } = await supabase.auth.getSession();
   return Boolean(data?.session);
@@ -35,6 +56,7 @@ function renderArticle(article) {
         </div>
       </section>
     ` : ""}
+    ${renderCreditsSection(article)}
   `;
 }
 
