@@ -6,6 +6,7 @@ create table if not exists public.articles (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   category text not null,
+  author_name text,
   excerpt text not null,
   content text not null,
   credit_author text,

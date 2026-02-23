@@ -14,6 +14,7 @@ const contextMeta = document.getElementById("editorContextMeta");
 const articleIdInput = document.getElementById("articleId");
 const titleInput = document.getElementById("title");
 const categoryInput = document.getElementById("category");
+const authorNameInput = document.getElementById("authorName");
 const excerptInput = document.getElementById("excerpt");
 const contentInput = document.getElementById("content");
 const creditAuthorInput = document.getElementById("creditAuthor");
@@ -282,6 +283,7 @@ function mapRecordToForm(record) {
   articleIdInput.value = record.id;
   titleInput.value = record.title || "";
   categoryInput.value = record.category || "";
+  authorNameInput.value = record.author_name || "";
   excerptInput.value = record.excerpt || "";
   contentInput.value = record.content || "";
   creditAuthorInput.value = record.credit_author || "";
@@ -450,7 +452,7 @@ cancelBtn.addEventListener("click", () => {
   resetToNew();
 });
 
-[titleInput, categoryInput, excerptInput, contentInput, creditAuthorInput, creditPhotosInput, creditDirectorInput].forEach((node) => {
+[titleInput, categoryInput, authorNameInput, excerptInput, contentInput, creditAuthorInput, creditPhotosInput, creditDirectorInput].forEach((node) => {
   node.addEventListener("input", syncContext);
   node.addEventListener("change", syncContext);
 });
@@ -507,11 +509,14 @@ async function saveArticle(targetPublished) {
     const creditAuthor = cleanPlainText(creditAuthorInput.value) || null;
     const creditPhotos = cleanPlainText(creditPhotosInput.value) || null;
     const creditDirector = cleanPlainText(creditDirectorInput.value) || null;
+    const authorName = cleanPlainText(authorNameInput.value) || null;
     const hasCreditsInput = Boolean(creditAuthor || creditPhotos || creditDirector);
+    const hasExtendedMetadataInput = Boolean(authorName || hasCreditsInput);
 
     const fullPayload = {
       title: titleInput.value.trim(),
       category: categoryInput.value.trim(),
+      author_name: authorName,
       excerpt: excerptInput.value.trim(),
       content: contentInput.value.trim(),
       credit_author: creditAuthor,
@@ -546,8 +551,8 @@ async function saveArticle(targetPublished) {
         .select(ARTICLE_SELECT_FIELDS)
         .single();
       if (error && isMissingColumnError(error)) {
-        if (hasCreditsInput) {
-          throw new Error("I campi crediti non sono ancora attivi nel database Supabase. Esegui la migrazione SQL 'supabase/add_article_credits_fields.sql' e riprova.");
+        if (hasExtendedMetadataInput) {
+          throw new Error("I campi metadata (autore/crediti) non sono ancora attivi nel database Supabase. Esegui la migrazione SQL e riprova.");
         }
         ({ data, error } = await supabase
           .from("articles")
@@ -565,8 +570,8 @@ async function saveArticle(targetPublished) {
         .select(ARTICLE_SELECT_FIELDS)
         .single();
       if (error && isMissingColumnError(error)) {
-        if (hasCreditsInput) {
-          throw new Error("I campi crediti non sono ancora attivi nel database Supabase. Esegui la migrazione SQL 'supabase/add_article_credits_fields.sql' e riprova.");
+        if (hasExtendedMetadataInput) {
+          throw new Error("I campi metadata (autore/crediti) non sono ancora attivi nel database Supabase. Esegui la migrazione SQL e riprova.");
         }
         ({ data, error } = await supabase
           .from("articles")
