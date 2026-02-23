@@ -22,6 +22,28 @@ let articles = [];
 let events = [];
 let countdowns = [];
 
+function isMobileContext() {
+  return window.matchMedia("(max-width: 1023px)").matches
+    || window.matchMedia("(pointer: coarse)").matches;
+}
+
+function focusSearchInputForMobile() {
+  const focusNow = () => {
+    try {
+      searchInput.focus({ preventScroll: true });
+    } catch (_) {
+      searchInput.focus();
+    }
+    searchInput.click();
+    const caret = searchInput.value.length;
+    searchInput.setSelectionRange(caret, caret);
+  };
+
+  focusNow();
+  setTimeout(focusNow, 120);
+  setTimeout(focusNow, 320);
+}
+
 function normalizeAgendaDateInput(value) {
   if (!value) return "";
   const raw = String(value).trim();
@@ -128,10 +150,9 @@ async function bootstrap() {
   searchInput.addEventListener("input", () => render(searchInput.value));
   render(initialQuery);
 
-  if (shouldFocus) {
+  if (shouldFocus && isMobileContext()) {
     requestAnimationFrame(() => {
-      searchInput.focus();
-      searchInput.select();
+      focusSearchInputForMobile();
     });
   }
 }
