@@ -181,11 +181,23 @@ async function uploadToStorage(articleId, file, kind) {
 async function uploadToStoragePath(path, file) {
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: "3600",
-    upsert: true
+    upsert: false
   });
   if (error) throw error;
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return { path, url: data.publicUrl };
+}
+
+function buildNormalizedImagePath(articleId, title = "") {
+  const stamp = Date.now();
+  const cleanTitle = toSlugSafeName(title || `article-${articleId}`) || `article-${articleId}`;
+  return `articles/${articleId}/images/${stamp}-${cleanTitle}-fhd-sdr.jpg`;
+}
+
+function withCacheBust(url) {
+  if (!url) return url;
+  const join = url.includes("?") ? "&" : "?";
+  return `${url}${join}v=${Date.now()}`;
 }
 
 function getResizedDimensions(width, height) {
@@ -607,21 +619,29 @@ normalizeAllImagesBtn?.addEventListener("click", async () => {
 
     const items = (articles || []).filter((item) => item.image_url);
     let done = 0;
+    let failed = 0;
 
     for (const item of items) {
-      const normalized = await normalizeRemoteImage(item.image_url, item.title || item.id);
-      const targetPath = item.image_path || `articles/${item.id}/images/${Date.now()}-${toSlugSafeName(normalized.file.name)}`;
-      const uploaded = await uploadToStoragePath(targetPath, normalized.file);
-      const { error: updateErr } = await supabase
-        .from("articles")
-        .update({ image_url: uploaded.url, image_path: uploaded.path, updated_at: new Date().toISOString() })
-        .eq("id", item.id);
-      if (updateErr) throw updateErr;
-
-      done += 1;
-      setImageNotice(`Normalizzazione foto esistenti: ${done}/${items.length}`);
+      try {
+        const normalized = await normalizeRemoteImage(item.image_url, item.title || item.id);
+        const targetPath = buildNormalizedImagePath(item.id, item.title);
+        const uploaded = await uploadToStoragePath(targetPath, normalized.file);
+        const { error: updateErr } = await supabase
+          .from("articles")
+          .update({ image_url: withCacheBust(uploaded.url), image_path: uploaded.path, updated_at: new Date().toISOString() })
+          .eq("id", item.id);
+        if (updateErr) throw updateErr;
+        done += 1;
+      } catch (itemError) {
+        console.error("Normalizzazione immagine fallita per articolo:", item.id, itemError);
+        failed += 1;
+      }
+      setImageNotice(`Normalizzazione foto esistenti: ${done}/${items.length} completate${failed ? `, ${failed} con errore` : ""}`);
     }
 
+    if (failed) {
+      setError(`Normalizzazione completata con errori: ${done} aggiornate, ${failed} non aggiornate.`);
+    }
     setImageNotice(`Normalizzazione completata: ${done} immagini aggiornate (SDR + max Full HD).`);
   } catch (error) {
     console.error(error);
