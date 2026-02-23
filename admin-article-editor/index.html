@@ -45,6 +45,7 @@
         <button type="button" id="cancelBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Annulla</button>
         <button type="button" id="saveDraftBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Salva nelle bozze</button>
         <button type="button" id="publishBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-accent text-white">Pubblica articolo</button>
+        <button type="button" id="normalizeAllImagesBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Normalizza foto esistenti</button>
       </div>
     </section>
 
@@ -74,7 +75,8 @@
       <div class="space-y-2">
         <label class="text-xs font-bold uppercase">Foto articolo</label>
         <input id="articleImageInput" type="file" accept="image/*" class="w-full border-2 border-black file:mr-3 file:border-0 file:bg-black file:px-3 file:py-2 file:text-xs file:font-bold file:uppercase file:text-white" />
-        <p class="text-[11px] text-slate-600">L'immagine viene adattata automaticamente in tutte le card e nel dettaglio articolo.</p>
+        <p class="text-[11px] text-slate-600">Le foto vengono convertite automaticamente in SDR e ridimensionate al massimo in Full HD (1920x1080).</p>
+        <p id="imageNormalizationNotice" class="hidden text-[11px] font-semibold text-accent"></p>
         <img id="articleImagePreview" alt="Anteprima foto articolo" class="hidden w-full max-h-56 object-cover border-2 border-black" />
         <button type="button" id="removeArticleImageBtn" class="hidden border-2 border-black bg-white px-3 py-1 text-[11px] font-bold uppercase">Rimuovi foto</button>
       </div>

@@ -22,6 +22,8 @@ const articleImagePreview = document.getElementById("articleImagePreview");
 const removeArticleImageBtn = document.getElementById("removeArticleImageBtn");
 const articleAttachmentInput = document.getElementById("articleAttachmentInput");
 const articleAttachmentList = document.getElementById("articleAttachmentList");
+const imageNormalizationNotice = document.getElementById("imageNormalizationNotice");
+const normalizeAllImagesBtn = document.getElementById("normalizeAllImagesBtn");
 
 let originalRecord = null;
 let currentArticleImageUrl = "";
@@ -31,6 +33,11 @@ let currentArticleAttachments = [];
 let currentPublished = false;
 let isSaving = false;
 
+const MAX_IMAGE_WIDTH = 1920;
+const MAX_IMAGE_HEIGHT = 1080;
+const OUTPUT_IMAGE_TYPE = "image/jpeg";
+const OUTPUT_IMAGE_QUALITY = 0.9;
+
 function setError(message = "") {
   if (!message) {
     editorError.classList.add("hidden");
@@ -39,6 +46,17 @@ function setError(message = "") {
   }
   editorError.textContent = message;
   editorError.classList.remove("hidden");
+}
+
+function setImageNotice(message = "") {
+  if (!imageNormalizationNotice) return;
+  if (!message) {
+    imageNormalizationNotice.classList.add("hidden");
+    imageNormalizationNotice.textContent = "";
+    return;
+  }
+  imageNormalizationNotice.textContent = message;
+  imageNormalizationNotice.classList.remove("hidden");
 }
 
 function formatBytes(bytes) {
@@ -148,6 +166,94 @@ async function uploadToStorage(articleId, file, kind) {
   return { path, url: data.publicUrl };
 }
 
+async function uploadToStoragePath(path, file) {
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: true
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return { path, url: data.publicUrl };
+}
+
+function getResizedDimensions(width, height) {
+  const ratio = Math.min(MAX_IMAGE_WIDTH / width, MAX_IMAGE_HEIGHT / height, 1);
+  return {
+    width: Math.max(1, Math.round(width * ratio)),
+    height: Math.max(1, Math.round(height * ratio))
+  };
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Impossibile esportare l'immagine normalizzata."));
+    }, type, quality);
+  });
+}
+
+async function readImageBitmap(source) {
+  if ("createImageBitmap" in window) {
+    return createImageBitmap(source);
+  }
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Impossibile leggere l'immagine selezionata."));
+    img.src = URL.createObjectURL(source);
+  });
+}
+
+function getSourceDimensions(source) {
+  return {
+    width: source.width || source.videoWidth || 1,
+    height: source.height || source.videoHeight || 1
+  };
+}
+
+async function normalizeImageFile(file, baseName = "") {
+  const source = await readImageBitmap(file);
+  const sourceDims = getSourceDimensions(source);
+  const targetDims = getResizedDimensions(sourceDims.width, sourceDims.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = targetDims.width;
+  canvas.height = targetDims.height;
+
+  const ctx = canvas.getContext("2d", { alpha: false, colorSpace: "srgb" });
+  if (!ctx) throw new Error("Impossibile inizializzare il motore grafico per la normalizzazione.");
+  ctx.drawImage(source, 0, 0, targetDims.width, targetDims.height);
+
+  if (typeof source.close === "function") {
+    source.close();
+  }
+
+  const blob = await canvasToBlob(canvas, OUTPUT_IMAGE_TYPE, OUTPUT_IMAGE_QUALITY);
+  const cleanBase = toSlugSafeName(baseName || file.name || "immagine").replace(/\.[a-z0-9]+$/i, "");
+  const normalizedName = `${cleanBase || "immagine"}-fhd-sdr.jpg`;
+  const normalizedFile = new File([blob], normalizedName, {
+    type: OUTPUT_IMAGE_TYPE,
+    lastModified: Date.now()
+  });
+
+  return {
+    file: normalizedFile,
+    width: targetDims.width,
+    height: targetDims.height,
+    resized: targetDims.width !== sourceDims.width || targetDims.height !== sourceDims.height,
+    sourceWidth: sourceDims.width,
+    sourceHeight: sourceDims.height
+  };
+}
+
+async function normalizeRemoteImage(url, baseName = "immagine") {
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error("Download immagine fallito.");
+  const blob = await response.blob();
+  const file = new File([blob], `${toSlugSafeName(baseName)}.bin`, { type: blob.type || "image/jpeg" });
+  return normalizeImageFile(file, baseName);
+}
+
 function mapRecordToForm(record) {
   articleIdInput.value = record.id;
   titleInput.value = record.title || "";
@@ -240,16 +346,25 @@ async function bootstrap() {
 articleImageInput.addEventListener("change", () => {
   const file = articleImageInput.files?.[0];
   if (!file) return;
-  currentArticleImageFile = file;
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    const preview = typeof reader.result === "string" ? reader.result : "";
-    if (!preview) return;
-    currentArticleImageUrl = preview;
-    setImagePreview(preview);
-  };
-  reader.readAsDataURL(file);
+  (async () => {
+    try {
+      setImageNotice("Normalizzazione immagine in corso (SDR + max Full HD)...");
+      const normalized = await normalizeImageFile(file, file.name);
+      currentArticleImageFile = normalized.file;
+
+      const preview = URL.createObjectURL(normalized.file);
+      currentArticleImageUrl = preview;
+      setImagePreview(preview);
+      setImageNotice(`Immagine pronta: ${normalized.width}x${normalized.height} (SDR, JPG).`);
+    } catch (error) {
+      console.error(error);
+      currentArticleImageFile = null;
+      articleImageInput.value = "";
+      setImageNotice("");
+      setError("Impossibile normalizzare l'immagine selezionata.");
+    }
+  })();
 });
 
 removeArticleImageBtn.addEventListener("click", () => {
@@ -258,6 +373,7 @@ removeArticleImageBtn.addEventListener("click", () => {
   currentArticleImageFile = null;
   articleImageInput.value = "";
   setImagePreview("");
+  setImageNotice("");
   syncContext();
 });
 
@@ -403,6 +519,52 @@ publishBtn.addEventListener("click", () => saveArticle(true));
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   await saveArticle(currentPublished);
+});
+
+normalizeAllImagesBtn?.addEventListener("click", async () => {
+  if (isSaving) return;
+
+  const shouldRun = window.confirm(
+    "Normalizzare TUTTE le foto articoli esistenti in SDR e Full HD (max 1920x1080)? L'operazione può richiedere alcuni minuti."
+  );
+  if (!shouldRun) return;
+
+  try {
+    setSavingState(true);
+    setError("");
+    setImageNotice("Normalizzazione foto esistenti avviata...");
+
+    const { data: articles, error } = await supabase
+      .from("articles")
+      .select("id,title,image_url,image_path")
+      .not("image_url", "is", null);
+    if (error) throw error;
+
+    const items = (articles || []).filter((item) => item.image_url);
+    let done = 0;
+
+    for (const item of items) {
+      const normalized = await normalizeRemoteImage(item.image_url, item.title || item.id);
+      const targetPath = item.image_path || `articles/${item.id}/images/${Date.now()}-${toSlugSafeName(normalized.file.name)}`;
+      const uploaded = await uploadToStoragePath(targetPath, normalized.file);
+      const { error: updateErr } = await supabase
+        .from("articles")
+        .update({ image_url: uploaded.url, image_path: uploaded.path, updated_at: new Date().toISOString() })
+        .eq("id", item.id);
+      if (updateErr) throw updateErr;
+
+      done += 1;
+      setImageNotice(`Normalizzazione foto esistenti: ${done}/${items.length}`);
+    }
+
+    setImageNotice(`Normalizzazione completata: ${done} immagini aggiornate (SDR + max Full HD).`);
+  } catch (error) {
+    console.error(error);
+    setError(error?.message || "Errore durante la normalizzazione delle immagini esistenti.");
+    setImageNotice("");
+  } finally {
+    setSavingState(false);
+  }
 });
 
 bootstrap().catch((error) => {
