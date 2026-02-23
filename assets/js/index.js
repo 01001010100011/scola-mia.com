@@ -2,6 +2,7 @@ import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishe
 import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, onlyFutureEvents } from "./countdown-data.js";
 import { formatCountdown, formatTargetDate } from "./countdown-core.js";
 import { formatLocalDate } from "./supabase-client.js";
+import { buildArticleUrl } from "./article-url.js";
 
 const grid = document.getElementById("articlesGrid");
 const featured = document.getElementById("featuredArticles");
@@ -36,14 +37,14 @@ function articleCard(article) {
       <h3 class="mt-2 text-xl font-semibold">${article.title}</h3>
       ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
       <p class="mt-2 text-sm flex-1">${article.excerpt}</p>
-      <a class="inline-block mt-4 text-xs font-bold uppercase underline" href="article.html?id=${encodeURIComponent(article.id)}">Leggi</a>
+      <a class="inline-block mt-4 text-xs font-bold uppercase underline" href="${buildArticleUrl(article.id, article.title)}">Leggi</a>
     </article>
   `;
 }
 
 function featuredCard(article, index) {
   return `
-    <a href="article.html?id=${encodeURIComponent(article.id)}" class="stagger block border-2 border-white/60 p-4 hover:bg-white hover:text-black transition-colors" style="animation-delay:${index * 0.1}s">
+    <a href="${buildArticleUrl(article.id, article.title)}" class="stagger block border-2 border-white/60 p-4 hover:bg-white hover:text-black transition-colors" style="animation-delay:${index * 0.1}s">
       ${article.image_url ? `<div class="mb-2 border border-white/60 aspect-[16/9] overflow-hidden"><img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" /></div>` : ""}
       <p class="text-sm font-semibold uppercase tracking-wide opacity-90">${article.category}</p>
       <h3 class="text-lg font-bold mt-1">${article.title}</h3>
@@ -173,7 +174,7 @@ async function renderHome() {
   const top = published.slice(0, 3);
   const presentationArticle = published.find((article) => article.id === PRESENTATION_ARTICLE_ID || article.title.trim().toLowerCase() === "presentazione sito");
   if (presentationArticleBtn && presentationArticle) {
-    presentationArticleBtn.href = `article.html?id=${encodeURIComponent(presentationArticle.id)}`;
+    presentationArticleBtn.href = buildArticleUrl(presentationArticle.id, presentationArticle.title);
   }
 
   if (articlesRes.status === "rejected") {

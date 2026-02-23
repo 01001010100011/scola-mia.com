@@ -1,5 +1,6 @@
 import { getArticleById } from "./public-api.js";
 import { escapeHtml, formatLocalDate, supabase } from "./supabase-client.js";
+import { slugifyArticleTitle } from "./article-url.js";
 
 const container = document.getElementById("articleContainer");
 
@@ -38,7 +39,8 @@ function renderArticle(article) {
 }
 
 async function bootstrap() {
-  const id = new URLSearchParams(window.location.search).get("id");
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
   if (!id) {
     container.innerHTML = '<p class="text-lg font-semibold">Articolo non trovato.</p>';
     return;
@@ -51,6 +53,12 @@ async function bootstrap() {
     if (!article) {
       container.innerHTML = '<p class="text-lg font-semibold">Articolo non disponibile.</p>';
       return;
+    }
+
+    const expectedSlug = slugifyArticleTitle(article.title);
+    if (expectedSlug && params.get("slug") !== expectedSlug) {
+      params.set("slug", expectedSlug);
+      history.replaceState(null, "", `article.html?${params.toString()}`);
     }
 
     renderArticle(article);

@@ -10,6 +10,7 @@ import {
 import { FALLBACK_COUNTDOWN_EVENTS, onlyFutureEvents } from "./countdown-data.js";
 import { formatTargetDate } from "./countdown-core.js";
 import { formatLocalDate } from "./supabase-client.js";
+import { buildArticleUrl } from "./article-url.js";
 
 const articleResultsEl = document.getElementById("articleResults");
 const agendaResultsEl = document.getElementById("agendaResults");
@@ -58,7 +59,7 @@ function render(query = "") {
           <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
           <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
           <p class="mt-2 text-sm">${item.excerpt}</p>
-          <a href="article.html?id=${encodeURIComponent(item.id)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Apri</a>
+          <a href="${buildArticleUrl(item.id, item.title)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Apri</a>
         </article>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun articolo trovato.</div>';

@@ -1,5 +1,6 @@
 import { getPublishedArticles } from "./public-api.js";
 import { formatLocalDate } from "./supabase-client.js";
+import { buildArticleUrl } from "./article-url.js";
 
 const searchInput = document.getElementById("archiveSearchInput");
 const allEl = document.getElementById("allArticles");
@@ -27,7 +28,7 @@ function card(article) {
       <h3 class="mt-2 text-lg font-semibold">${article.title}</h3>
       ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
       <p class="mt-2 text-sm flex-1">${article.excerpt}</p>
-      <a href="article.html?id=${encodeURIComponent(article.id)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Leggi</a>
+      <a href="${buildArticleUrl(article.id, article.title)}" class="inline-block mt-3 text-xs font-bold uppercase underline">Leggi</a>
     </article>
   `;
 }
