@@ -6,11 +6,11 @@ import {
   getCountdownEvents,
   getPublishedArticles,
   queryMatches
-} from "./public-api.js";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js";
-import { formatTargetDate } from "./countdown-core.js";
-import { formatLocalDate } from "./supabase-client.js";
-import { buildArticleUrl } from "./article-url.js";
+} from "./public-api.js?v=20260224e";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20260224e";
+import { formatTargetDate } from "./countdown-core.js?v=20260224e";
+import { formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { buildArticleUrl } from "./article-url.js?v=20260224e";
 
 const articleResultsEl = document.getElementById("articleResults");
 const agendaResultsEl = document.getElementById("agendaResults");

@@ -1,12 +1,12 @@
-import { getCountdownEventBySlug } from "./public-api.js";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js";
+import { getCountdownEventBySlug } from "./public-api.js?v=20260224e";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js?v=20260224e";
 import {
   formatTargetDate,
   getExcludedDateKeys2026,
   getRemainingPartsFromMs,
   getRemainingTotalsFromMs,
   getWorkingRemainingMs
-} from "./countdown-core.js";
+} from "./countdown-core.js?v=20260224e";
 
 const titleEl = document.getElementById("countdownTitle");
 const targetEl = document.getElementById("countdownTarget");

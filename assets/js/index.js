@@ -1,8 +1,8 @@
-import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishedArticles } from "./public-api.js";
-import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js";
-import { formatCountdown, formatTargetDate } from "./countdown-core.js";
-import { formatLocalDate } from "./supabase-client.js";
-import { buildArticleUrl } from "./article-url.js";
+import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishedArticles } from "./public-api.js?v=20260224e";
+import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20260224e";
+import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20260224e";
+import { formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { buildArticleUrl } from "./article-url.js?v=20260224e";
 
 const grid = document.getElementById("articlesGrid");
 const featured = document.getElementById("featuredArticles");

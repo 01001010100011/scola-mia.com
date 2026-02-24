@@ -1,12 +1,12 @@
-import { countdownDateTokens, getCountdownEvents, queryMatches } from "./public-api.js";
+import { countdownDateTokens, getCountdownEvents, queryMatches } from "./public-api.js?v=20260224e";
 import {
   FEATURED_COUNTDOWN_SLUG,
   FALLBACK_COUNTDOWN_EVENTS,
   countdownTitleWithEmoji,
   onlyFutureEvents,
   sortCountdownEvents
-} from "./countdown-data.js";
-import { formatCountdown, formatTargetDate } from "./countdown-core.js";
+} from "./countdown-data.js?v=20260224e";
+import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20260224e";
 
 const featuredEl = document.getElementById("featuredCountdown");
 const listEl = document.getElementById("countdownList");

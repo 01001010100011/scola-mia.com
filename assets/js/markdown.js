@@ -1,4 +1,4 @@
-import { escapeHtml } from "./supabase-client.js";
+import { escapeHtml } from "./supabase-client.js?v=20260224e";
 
 function parseInline(markdown) {
   let text = escapeHtml(markdown);

@@ -1,5 +1,5 @@
-import { getAgendaEventById } from "./public-api.js";
-import { escapeHtml, formatLocalDate } from "./supabase-client.js";
+import { getAgendaEventById } from "./public-api.js?v=20260224e";
+import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
 
 const container = document.getElementById("agendaEventContainer");
 

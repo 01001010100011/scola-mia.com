@@ -1,4 +1,4 @@
-import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js";
+import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js?v=20260224e";
 
 const REQUIRE_LOGIN_ON_EACH_VISIT = false;
 

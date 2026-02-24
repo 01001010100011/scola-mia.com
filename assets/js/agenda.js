@@ -1,5 +1,5 @@
-import { getAgendaEvents } from "./public-api.js";
-import { formatLocalDate } from "./supabase-client.js";
+import { getAgendaEvents } from "./public-api.js?v=20260224e";
+import { formatLocalDate } from "./supabase-client.js?v=20260224e";
 
 const listEl = document.getElementById("agendaList");
 const searchInput = document.getElementById("agendaSearchInput");
