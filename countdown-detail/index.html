@@ -58,6 +58,13 @@
       transform: translateX(20px);
       background: #fff;
     }
+    .info-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: min(320px, calc(100vw - 2rem));
+      z-index: 20;
+    }
   </style>
 </head>
 <body class="text-ink" data-page-title="Countdown">
@@ -106,26 +113,36 @@
 
   <main class="max-w-7xl mx-auto px-4 md:px-8 py-10">
     <div class="detail-shell space-y-6">
-      <a href="/countdown/" class="text-xs font-bold uppercase underline">Torna agli eventi</a>
-      <section id="countdownDetailCard" class="w-full border-4 border-black bg-white p-6 md:p-10 shadow-brutal">
-      <div class="flex justify-end mb-4">
-        <div class="border-2 border-black bg-paper px-3 py-2 flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold uppercase">Escludi weekend e festivi</span>
-            <button
-              id="workingCountdownInfo"
-              type="button"
-              class="border-2 border-black bg-white w-6 h-6 inline-flex items-center justify-center text-[10px] font-bold"
-              title="Il countdown ignora sabati, domeniche e festività ufficiali del 2026."
-              aria-label="Il countdown ignora sabati, domeniche e festività ufficiali del 2026."
-            >i</button>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <a href="/countdown/" class="text-xs font-bold uppercase underline">Torna agli eventi</a>
+        <div class="relative w-fit md:ml-auto">
+          <div class="border-2 border-black bg-paper px-3 py-2 flex items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase">Escludi weekend e festivi</span>
+              <button
+                id="workingCountdownInfo"
+                type="button"
+                class="border-2 border-black bg-white w-7 h-7 inline-flex items-center justify-center text-xs font-bold leading-none"
+                aria-label="Mostra informazioni sulla modalità countdown"
+                aria-expanded="false"
+                aria-controls="workingCountdownInfoPopover"
+              >?</button>
+            </div>
+            <label class="inline-flex items-center cursor-pointer">
+              <input id="workingCountdownToggle" type="checkbox" class="sr-only" />
+              <span class="countdown-switch" aria-hidden="true"></span>
+            </label>
           </div>
-          <label class="inline-flex items-center cursor-pointer">
-            <input id="workingCountdownToggle" type="checkbox" class="sr-only" />
-            <span class="countdown-switch" aria-hidden="true"></span>
-          </label>
+          <div
+            id="workingCountdownInfoPopover"
+            class="info-popover hidden border-2 border-black bg-white p-3 shadow-brutal text-xs font-semibold leading-snug"
+            role="tooltip"
+          >
+            Il countdown ignora sabati, domeniche e festività ufficiali del 2026.
+          </div>
         </div>
       </div>
+      <section id="countdownDetailCard" class="w-full border-4 border-black bg-white p-6 md:p-10 shadow-brutal">
       <p id="countdownTitle" class="headline text-6xl">Evento</p>
       <p id="countdownTarget" class="mt-2 text-sm font-semibold text-slate-600"></p>
       <p id="countdownDetailStatus" class="hidden mt-3 text-sm font-semibold text-red-700"></p>

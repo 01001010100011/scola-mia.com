@@ -22,6 +22,8 @@ const totalHoursEl = document.getElementById("totalHours");
 const totalMinutesEl = document.getElementById("totalMinutes");
 const totalSecondsEl = document.getElementById("totalSeconds");
 const workingModeToggleEl = document.getElementById("workingCountdownToggle");
+const workingInfoBtnEl = document.getElementById("workingCountdownInfo");
+const workingInfoPopoverEl = document.getElementById("workingCountdownInfoPopover");
 
 let timer = null;
 let currentEvent = null;
@@ -173,6 +175,31 @@ function mountWorkingModeToggle(event) {
   });
 }
 
+function setInfoPopoverOpen(open) {
+  if (!workingInfoPopoverEl || !workingInfoBtnEl) return;
+  workingInfoPopoverEl.classList.toggle("hidden", !open);
+  workingInfoBtnEl.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function mountWorkingInfoPopover() {
+  if (!workingInfoBtnEl || !workingInfoPopoverEl) return;
+
+  workingInfoBtnEl.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isHidden = workingInfoPopoverEl.classList.contains("hidden");
+    setInfoPopoverOpen(isHidden);
+  });
+
+  workingInfoPopoverEl.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
+  document.addEventListener("click", () => setInfoPopoverOpen(false));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setInfoPopoverOpen(false);
+  });
+}
+
 async function bootstrap() {
   const slug = new URLSearchParams(window.location.search).get("id");
   if (!slug) {
@@ -196,6 +223,7 @@ async function bootstrap() {
     ? formatTargetDateTimeLocal(event.target_at)
     : formatTargetDate(event.target_at);
   mountWorkingModeToggle(event);
+  mountWorkingInfoPopover();
   renderTick(event);
 
   timer = setInterval(() => renderTick(event), 1000);
