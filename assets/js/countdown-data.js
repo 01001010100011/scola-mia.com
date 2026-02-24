@@ -8,6 +8,37 @@ export const FALLBACK_COUNTDOWN_EVENTS = [
   { slug: "termine-lezioni", title: "Fine della scuola", target_at: "2026-06-08T00:00:00+02:00", featured: true, active: true }
 ];
 
+const COUNTDOWN_EMOJI_BY_SLUG = {
+  "termine-lezioni": "📚",
+  "vacanze-pasquali-2026": "🥚",
+  "vacanze-natale-2025": "🎄",
+  "festa-lavoro-2026": "🧑‍🏭",
+  "festa-repubblica-2026": "🇮🇹",
+  "primo-giugno-2026": "📅",
+  "immacolata-concezione-2025": "🕊️"
+};
+
+export function countdownEmoji(event) {
+  const slug = String(event?.slug || "").trim().toLowerCase();
+  if (slug && COUNTDOWN_EMOJI_BY_SLUG[slug]) return COUNTDOWN_EMOJI_BY_SLUG[slug];
+
+  const title = String(event?.title || "").trim().toLowerCase();
+  if (title.includes("pasqua")) return "🥚";
+  if (title.includes("natale")) return "🎄";
+  if (title.includes("lavoro")) return "🧑‍🏭";
+  if (title.includes("repubblica")) return "🇮🇹";
+  if (title.includes("immacolata")) return "🕊️";
+  if (title.includes("scuola") || title.includes("lezioni")) return "📚";
+  if (title.includes("giugno")) return "📅";
+  return "⏳";
+}
+
+export function countdownTitleWithEmoji(event) {
+  const title = String(event?.title || "").trim();
+  if (!title) return "";
+  return `${countdownEmoji(event)} ${title}`;
+}
+
 export function onlyFutureEvents(events) {
   const now = Date.now();
   return events.filter((event) => {

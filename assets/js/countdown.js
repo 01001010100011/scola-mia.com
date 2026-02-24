@@ -1,5 +1,11 @@
 import { countdownDateTokens, getCountdownEvents, queryMatches } from "./public-api.js";
-import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, onlyFutureEvents, sortCountdownEvents } from "./countdown-data.js";
+import {
+  FEATURED_COUNTDOWN_SLUG,
+  FALLBACK_COUNTDOWN_EVENTS,
+  countdownTitleWithEmoji,
+  onlyFutureEvents,
+  sortCountdownEvents
+} from "./countdown-data.js";
 import { formatCountdown, formatTargetDate } from "./countdown-core.js";
 
 const featuredEl = document.getElementById("featuredCountdown");
@@ -13,7 +19,7 @@ let activeQuery = "";
 let timer = null;
 
 function eventSearchSource(event) {
-  return `${event.title} ${countdownDateTokens(event.target_at)}`;
+  return `${countdownTitleWithEmoji(event)} ${countdownDateTokens(event.target_at)}`;
 }
 
 function filterEvents(events, query) {
@@ -25,7 +31,7 @@ function filterEvents(events, query) {
 function renderCard(event, isFeatured = false) {
   return `
     <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black ${isFeatured ? "bg-black text-white p-6 md:p-8" : "bg-white p-4"} shadow-brutal lift transition-all">
-      <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${event.title}</h3>
+      <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${countdownTitleWithEmoji(event)}</h3>
       <p data-countdown-value="${event.slug}" class="${isFeatured ? "mt-4 text-2xl font-bold" : "mt-3 text-lg font-bold"}">${formatCountdown(event.target_at)}</p>
       <p class="${isFeatured ? "mt-3 text-sm opacity-80" : "mt-2 text-xs uppercase font-semibold text-slate-500"}">${formatTargetDate(event.target_at)}</p>
     </a>

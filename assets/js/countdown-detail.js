@@ -1,5 +1,5 @@
 import { getCountdownEventBySlug } from "./public-api.js";
-import { FALLBACK_COUNTDOWN_EVENTS } from "./countdown-data.js";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js";
 import { formatTargetDate, getRemainingParts, getRemainingTotals } from "./countdown-core.js";
 
 const titleEl = document.getElementById("countdownTitle");
@@ -78,7 +78,7 @@ async function bootstrap() {
     return;
   }
 
-  titleEl.textContent = event.title;
+  titleEl.textContent = countdownTitleWithEmoji(event);
   targetEl.textContent = `Target: ${formatTargetDate(event.target_at)}`;
   renderTick(event);
 

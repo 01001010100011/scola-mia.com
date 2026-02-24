@@ -1,5 +1,5 @@
 import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishedArticles } from "./public-api.js";
-import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, onlyFutureEvents } from "./countdown-data.js";
+import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js";
 import { formatCountdown, formatTargetDate } from "./countdown-core.js";
 import { formatLocalDate } from "./supabase-client.js";
 import { buildArticleUrl } from "./article-url.js";
@@ -73,7 +73,7 @@ function countdownHomeFeaturedCard(event) {
   return `
     <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
       <p class="text-xs uppercase font-bold tracking-wide opacity-80">Countdown principale</p>
-      <h3 class="headline text-6xl mt-2">${event.title}</h3>
+      <h3 class="headline text-6xl mt-2">${countdownTitleWithEmoji(event)}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-4 text-2xl font-bold">${formatCountdown(event.target_at)}</p>
       <p class="mt-2 text-xs uppercase font-bold opacity-80">${formatTargetDate(event.target_at)}</p>
     </a>
@@ -83,7 +83,7 @@ function countdownHomeFeaturedCard(event) {
 function countdownHomeCard(event) {
   return `
     <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
-      <h3 class="headline text-4xl mt-1">${event.title}</h3>
+      <h3 class="headline text-4xl mt-1">${countdownTitleWithEmoji(event)}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-3 text-lg font-bold">${formatCountdown(event.target_at)}</p>
       <p class="mt-2 text-xs uppercase font-semibold text-slate-500">${formatTargetDate(event.target_at)}</p>
     </a>

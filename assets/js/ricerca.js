@@ -7,7 +7,7 @@ import {
   getPublishedArticles,
   queryMatches
 } from "./public-api.js";
-import { FALLBACK_COUNTDOWN_EVENTS, onlyFutureEvents } from "./countdown-data.js";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js";
 import { formatTargetDate } from "./countdown-core.js";
 import { formatLocalDate } from "./supabase-client.js";
 import { buildArticleUrl } from "./article-url.js";
@@ -67,7 +67,7 @@ function render(query = "") {
   );
 
   const countdownResults = countdowns.filter((item) =>
-    !q || queryMatches(`${item.title} ${countdownDateTokens(item.target_at)}`, q)
+    !q || queryMatches(`${countdownTitleWithEmoji(item)} ${countdownDateTokens(item.target_at)}`, q)
   );
 
   const contactResults = CONTACTS.filter((item) =>
@@ -105,7 +105,7 @@ function render(query = "") {
     ? countdownResults.map((item) => `
         <a href="/countdown-detail/?id=${encodeURIComponent(item.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">Countdown</p>
-          <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
+          <h3 class="mt-2 text-lg font-semibold">${countdownTitleWithEmoji(item)}</h3>
           <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatTargetDate(item.target_at)}</p>
           <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri dettaglio</span>
         </a>
