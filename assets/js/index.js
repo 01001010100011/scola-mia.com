@@ -76,6 +76,7 @@ function countdownHomeFeaturedCard(event) {
       <h3 class="headline text-6xl mt-2">${countdownTitleWithEmoji(event)}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-4 text-2xl font-bold">${formatCountdown(event.target_at)}</p>
       <p class="mt-2 text-xs uppercase font-bold opacity-80">${formatTargetDate(event.target_at)}</p>
+      <span class="inline-block mt-4 text-xs font-bold uppercase underline opacity-90">Vedi dettagli</span>
     </a>
   `;
 }
@@ -86,6 +87,7 @@ function countdownHomeCard(event) {
       <h3 class="headline text-4xl mt-1">${countdownTitleWithEmoji(event)}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-3 text-lg font-bold">${formatCountdown(event.target_at)}</p>
       <p class="mt-2 text-xs uppercase font-semibold text-slate-500">${formatTargetDate(event.target_at)}</p>
+      <span class="inline-block mt-3 text-xs font-bold uppercase underline">Vedi dettagli</span>
     </a>
   `;
 }

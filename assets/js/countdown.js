@@ -34,6 +34,7 @@ function renderCard(event, isFeatured = false) {
       <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${countdownTitleWithEmoji(event)}</h3>
       <p data-countdown-value="${event.slug}" class="${isFeatured ? "mt-4 text-2xl font-bold" : "mt-3 text-lg font-bold"}">${formatCountdown(event.target_at)}</p>
       <p class="${isFeatured ? "mt-3 text-sm opacity-80" : "mt-2 text-xs uppercase font-semibold text-slate-500"}">${formatTargetDate(event.target_at)}</p>
+      <span class="${isFeatured ? "inline-block mt-4 text-xs font-bold uppercase underline opacity-90" : "inline-block mt-3 text-xs font-bold uppercase underline"}">Vedi dettagli</span>
     </a>
   `;
 }
