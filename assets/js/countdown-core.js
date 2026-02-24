@@ -51,3 +51,15 @@ export function formatTargetDate(targetAt) {
     year: "numeric"
   });
 }
+
+export function formatTargetDateTime(targetAt) {
+  const date = toDate(targetAt);
+  if (!date) return "";
+  const dateLabel = formatTargetDate(targetAt);
+  const timeLabel = date.toLocaleTimeString("it-IT", {
+    timeZone: "Europe/Rome",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+  return `${dateLabel} · ${timeLabel}`;
+}

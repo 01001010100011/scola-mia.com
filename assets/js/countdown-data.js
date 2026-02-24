@@ -19,6 +19,11 @@ export function countdownTitleWithEmoji(event) {
   return emoji ? `${emoji} ${title}` : title;
 }
 
+export function isMaturitaCountdown(event) {
+  const slug = String(event?.slug || "").trim().toLowerCase();
+  return slug.startsWith("maturita-");
+}
+
 export function onlyFutureEvents(events) {
   const now = Date.now();
   return events.filter((event) => {

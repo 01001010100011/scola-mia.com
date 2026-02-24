@@ -2,11 +2,12 @@ import { countdownDateTokens, getCountdownEvents, queryMatches } from "./public-
 import {
   FEATURED_COUNTDOWN_SLUG,
   FALLBACK_COUNTDOWN_EVENTS,
+  isMaturitaCountdown,
   countdownTitleWithEmoji,
   onlyFutureEvents,
   sortCountdownEvents
 } from "./countdown-data.js";
-import { formatCountdown, formatTargetDate } from "./countdown-core.js";
+import { formatCountdown, formatTargetDate, formatTargetDateTime } from "./countdown-core.js";
 
 const featuredEl = document.getElementById("featuredCountdown");
 const listEl = document.getElementById("countdownList");
@@ -29,11 +30,12 @@ function filterEvents(events, query) {
 }
 
 function renderCard(event, isFeatured = false) {
+  const dateLabel = isMaturitaCountdown(event) ? formatTargetDateTime(event.target_at) : formatTargetDate(event.target_at);
   return `
     <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black ${isFeatured ? "bg-black text-white p-6 md:p-8" : "bg-white p-4"} shadow-brutal lift transition-all">
       <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${countdownTitleWithEmoji(event)}</h3>
       <p data-countdown-value="${event.slug}" class="${isFeatured ? "mt-4 text-2xl font-bold" : "mt-3 text-lg font-bold"}">${formatCountdown(event.target_at)}</p>
-      <p class="${isFeatured ? "mt-3 text-sm opacity-80" : "mt-2 text-xs uppercase font-semibold text-slate-500"}">${formatTargetDate(event.target_at)}</p>
+      <p class="${isFeatured ? "mt-3 text-sm opacity-80" : "mt-2 text-xs uppercase font-semibold text-slate-500"}">${dateLabel}</p>
       <span class="${isFeatured ? "inline-block mt-4 text-xs font-bold uppercase underline opacity-90" : "inline-block mt-3 text-xs font-bold uppercase underline"}">Vedi dettagli</span>
     </a>
   `;

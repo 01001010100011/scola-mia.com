@@ -1,6 +1,6 @@
 import { getCountdownEventBySlug } from "./public-api.js";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js";
-import { formatTargetDate, getRemainingParts, getRemainingTotals } from "./countdown-core.js";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, isMaturitaCountdown } from "./countdown-data.js";
+import { formatTargetDate, formatTargetDateTime, getRemainingParts, getRemainingTotals } from "./countdown-core.js";
 
 const titleEl = document.getElementById("countdownTitle");
 const targetEl = document.getElementById("countdownTarget");
@@ -79,7 +79,9 @@ async function bootstrap() {
   }
 
   titleEl.textContent = countdownTitleWithEmoji(event);
-  targetEl.textContent = `Target: ${formatTargetDate(event.target_at)}`;
+  targetEl.textContent = isMaturitaCountdown(event)
+    ? formatTargetDateTime(event.target_at)
+    : formatTargetDate(event.target_at);
   renderTick(event);
 
   timer = setInterval(() => renderTick(event), 1000);
