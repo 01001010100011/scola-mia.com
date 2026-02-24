@@ -15,7 +15,11 @@ where slug not in (
   'festa-lavoro-2026',
   'primo-giugno-2026',
   'festa-repubblica-2026',
-  'termine-lezioni'
+  'termine-lezioni',
+  'maturita-prima-prova-2026',
+  'maturita-seconda-prova-2026',
+  'maturita-suppletiva-scritti-2026',
+  'maturita-orali-2026'
 );
 
 -- 3) Upsert requested future events only
@@ -25,7 +29,11 @@ values
   ('festa-lavoro-2026',     'Festa del Lavoro',        '🧑‍🏭', '2026-05-01T00:00:00+02:00', false, true),
   ('primo-giugno-2026',     '1 giugno',                '📅',    '2026-06-01T00:00:00+02:00', false, true),
   ('festa-repubblica-2026', 'Festa della Repubblica',  '🇮🇹',   '2026-06-02T00:00:00+02:00', false, true),
-  ('termine-lezioni',       'Fine della scuola',       '📚',    '2026-06-08T00:00:00+02:00', true,  true)
+  ('termine-lezioni',       'Fine della scuola',       '📚',    '2026-06-08T00:00:00+02:00', true,  true),
+  ('maturita-prima-prova-2026',       'Prima prova scritta (Italiano)',          '📘', '2026-06-18T08:30:00+02:00', false, true),
+  ('maturita-seconda-prova-2026',     'Seconda prova scritta (indirizzo)',        '📗', '2026-06-19T08:30:00+02:00', false, true),
+  ('maturita-orali-2026',             'Orali (tutti gli indirizzi) - stima inizio','📕', '2026-06-22T08:30:00+02:00', false, true),
+  ('maturita-suppletiva-scritti-2026','Suppletiva (scritti)',                      '📙', '2026-07-01T08:30:00+02:00', false, true)
 on conflict (slug) do update
 set title = excluded.title,
     emoji = excluded.emoji,
