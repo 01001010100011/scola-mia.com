@@ -1,6 +1,6 @@
 import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishedArticles } from "./public-api.js";
-import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, isMaturitaCountdown, onlyFutureEvents } from "./countdown-data.js";
-import { formatCountdown, formatTargetDate, formatTargetDateTime } from "./countdown-core.js";
+import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js";
+import { formatCountdown, formatTargetDate } from "./countdown-core.js";
 import { formatLocalDate } from "./supabase-client.js";
 import { buildArticleUrl } from "./article-url.js";
 
@@ -14,6 +14,23 @@ const PRESENTATION_ARTICLE_ID = "9d056b37-cacf-4c49-879e-d312fb4ef31f";
 
 let homeCountdownEvents = [];
 let homeCountdownTicker = null;
+
+function isMaturitaCountdownLocal(event) {
+  const slug = String(event?.slug || "").trim().toLowerCase();
+  return slug.startsWith("maturita-");
+}
+
+function formatTargetDateTimeLocal(targetAt) {
+  const date = new Date(targetAt);
+  if (Number.isNaN(date.getTime())) return formatTargetDate(targetAt);
+  const dateLabel = formatTargetDate(targetAt);
+  const timeLabel = date.toLocaleTimeString("it-IT", {
+    timeZone: "Europe/Rome",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+  return `${dateLabel} · ${timeLabel}`;
+}
 
 function shortDate(value) {
   const date = new Date(value);
@@ -70,7 +87,7 @@ function sortByTargetDate(events) {
 }
 
 function countdownHomeFeaturedCard(event) {
-  const dateLabel = isMaturitaCountdown(event) ? formatTargetDateTime(event.target_at) : formatTargetDate(event.target_at);
+  const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
   return `
     <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
       <p class="text-xs uppercase font-bold tracking-wide opacity-80">Countdown principale</p>
@@ -83,7 +100,7 @@ function countdownHomeFeaturedCard(event) {
 }
 
 function countdownHomeCard(event) {
-  const dateLabel = isMaturitaCountdown(event) ? formatTargetDateTime(event.target_at) : formatTargetDate(event.target_at);
+  const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
   return `
     <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
       <h3 class="headline text-4xl mt-1">${countdownTitleWithEmoji(event)}</h3>

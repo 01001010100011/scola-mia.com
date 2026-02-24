@@ -1,6 +1,6 @@
 import { getCountdownEventBySlug } from "./public-api.js";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, isMaturitaCountdown } from "./countdown-data.js";
-import { formatTargetDate, formatTargetDateTime, getRemainingParts, getRemainingTotals } from "./countdown-core.js";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js";
+import { formatTargetDate, getRemainingParts, getRemainingTotals } from "./countdown-core.js";
 
 const titleEl = document.getElementById("countdownTitle");
 const targetEl = document.getElementById("countdownTarget");
@@ -16,6 +16,23 @@ const totalMinutesEl = document.getElementById("totalMinutes");
 const totalSecondsEl = document.getElementById("totalSeconds");
 
 let timer = null;
+
+function isMaturitaCountdownLocal(event) {
+  const slug = String(event?.slug || "").trim().toLowerCase();
+  return slug.startsWith("maturita-");
+}
+
+function formatTargetDateTimeLocal(targetAt) {
+  const date = new Date(targetAt);
+  if (Number.isNaN(date.getTime())) return formatTargetDate(targetAt);
+  const dateLabel = formatTargetDate(targetAt);
+  const timeLabel = date.toLocaleTimeString("it-IT", {
+    timeZone: "Europe/Rome",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+  return `${dateLabel} · ${timeLabel}`;
+}
 
 function stopTicker() {
   if (timer) {
@@ -79,8 +96,8 @@ async function bootstrap() {
   }
 
   titleEl.textContent = countdownTitleWithEmoji(event);
-  targetEl.textContent = isMaturitaCountdown(event)
-    ? formatTargetDateTime(event.target_at)
+  targetEl.textContent = isMaturitaCountdownLocal(event)
+    ? formatTargetDateTimeLocal(event.target_at)
     : formatTargetDate(event.target_at);
   renderTick(event);
 
