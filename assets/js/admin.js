@@ -103,6 +103,12 @@ function countdownSortValue(value) {
   return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
 }
 
+function normalizeCountdownEmoji(value) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed) return "";
+  return Array.from(trimmed).slice(0, 2).join("");
+}
+
 function isoToDateTimeLocal(value) {
   const date = new Date(value || "");
   if (Number.isNaN(date.getTime())) return "";
@@ -244,7 +250,7 @@ async function loadData() {
       .order("updated_at", { ascending: false }),
     supabase
       .from("countdowns")
-      .select("id,slug,title,target_at,is_featured,active,created_at,updated_at")
+      .select("id,slug,title,emoji,target_at,is_featured,active,created_at,updated_at")
       .order("is_featured", { ascending: false })
       .order("target_at", { ascending: true }),
     supabase
@@ -361,6 +367,7 @@ function renderFeaturedManager() {
 function resetCountdownForm() {
   countdownForm.reset();
   document.getElementById("countdownId").value = "";
+  document.getElementById("countdownEmoji").value = "";
   document.getElementById("countdownActive").checked = true;
   document.getElementById("countdownIsFeatured").checked = false;
   document.getElementById("submitCountdownBtn").textContent = "Salva Countdown";
@@ -391,6 +398,7 @@ function fillCountdownForm(item) {
   setContentSection("countdown");
   document.getElementById("countdownId").value = item.id;
   document.getElementById("countdownTitle").value = item.title;
+  document.getElementById("countdownEmoji").value = item.emoji || "";
   document.getElementById("countdownTargetAt").value = isoToDateTimeLocal(item.target_at);
   document.getElementById("countdownIsFeatured").checked = Boolean(item.is_featured);
   document.getElementById("countdownActive").checked = Boolean(item.active);
@@ -398,7 +406,7 @@ function fillCountdownForm(item) {
 
   setEditContext({
     type: "Countdown",
-    title: item.title,
+    title: `${item.emoji ? `${item.emoji} ` : ""}${item.title}`,
     meta: `Slug: ${item.slug || "-"} | Stato: ${item.active ? "Online" : "Disattivo"}`,
     onSave: () => countdownForm.requestSubmit(),
     onCancel: () => {
@@ -429,7 +437,7 @@ function renderAdminCountdowns() {
     <article class="border-2 border-black p-4">
       <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
         <div>
-          <h4 class="text-lg font-semibold">${escapeHtml(item.title)}</h4>
+          <h4 class="text-lg font-semibold">${escapeHtml(item.emoji ? `${item.emoji} ${item.title}` : item.title)}</h4>
           <p class="text-sm mt-1">Data target: ${new Date(item.target_at).toLocaleString("it-IT", { dateStyle: "medium", timeStyle: "short" })}</p>
           <p class="text-xs mt-2">
             ID: ${item.id} | Slug: ${item.slug || "-"} | Stato: ${item.active ? "Online" : "Disattivo"}
@@ -666,6 +674,7 @@ countdownForm.addEventListener("submit", async (event) => {
     const id = document.getElementById("countdownId").value || crypto.randomUUID();
     const now = new Date().toISOString();
     const title = document.getElementById("countdownTitle").value.trim();
+    const emoji = normalizeCountdownEmoji(document.getElementById("countdownEmoji").value);
     const targetAtIso = dateTimeLocalToIso(document.getElementById("countdownTargetAt").value);
     const isFeatured = document.getElementById("countdownIsFeatured").checked;
     const active = document.getElementById("countdownActive").checked;
@@ -678,6 +687,7 @@ countdownForm.addEventListener("submit", async (event) => {
       id,
       slug: countdownSlug(title, targetAtIso, existing?.slug),
       title,
+      emoji,
       target_at: targetAtIso,
       is_featured: isFeatured,
       active,

@@ -19,15 +19,16 @@ where slug not in (
 );
 
 -- 3) Upsert requested future events only
-insert into public.countdowns (slug, title, target_at, is_featured, active)
+insert into public.countdowns (slug, title, emoji, target_at, is_featured, active)
 values
-  ('vacanze-pasqua-2026',   'Vacanze di Pasqua',       '2026-04-02T00:00:00+02:00', false, true),
-  ('festa-lavoro-2026',     'Festa del Lavoro',        '2026-05-01T00:00:00+02:00', false, true),
-  ('primo-giugno-2026',     '1 giugno',                '2026-06-01T00:00:00+02:00', false, true),
-  ('festa-repubblica-2026', 'Festa della Repubblica',  '2026-06-02T00:00:00+02:00', false, true),
-  ('termine-lezioni',       'Fine della scuola',       '2026-06-08T00:00:00+02:00', true,  true)
+  ('vacanze-pasqua-2026',   'Vacanze di Pasqua',       '🥚',    '2026-04-02T00:00:00+02:00', false, true),
+  ('festa-lavoro-2026',     'Festa del Lavoro',        '🧑‍🏭', '2026-05-01T00:00:00+02:00', false, true),
+  ('primo-giugno-2026',     '1 giugno',                '📅',    '2026-06-01T00:00:00+02:00', false, true),
+  ('festa-repubblica-2026', 'Festa della Repubblica',  '🇮🇹',   '2026-06-02T00:00:00+02:00', false, true),
+  ('termine-lezioni',       'Fine della scuola',       '📚',    '2026-06-08T00:00:00+02:00', true,  true)
 on conflict (slug) do update
 set title = excluded.title,
+    emoji = excluded.emoji,
     target_at = excluded.target_at,
     is_featured = excluded.is_featured,
     active = excluded.active,

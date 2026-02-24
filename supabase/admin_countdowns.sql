@@ -49,6 +49,7 @@ create table if not exists public.countdowns (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
   title text not null,
+  emoji text,
   target_at timestamptz not null,
   is_featured boolean not null default false,
   active boolean not null default true,

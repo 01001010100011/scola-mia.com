@@ -111,6 +111,13 @@
               <input id="countdownTargetAt" type="datetime-local" required class="w-full border-2 border-black" />
             </div>
           </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-bold uppercase">Emoji</label>
+              <input id="countdownEmoji" class="w-full border-2 border-black" placeholder="📚" maxlength="8" />
+              <p class="text-[11px] mt-1 text-slate-600">Facoltativa. Scegli manualmente l'emoji del countdown.</p>
+            </div>
+          </div>
           <div class="flex flex-wrap gap-4 items-center">
             <label class="inline-flex items-center gap-2 font-semibold"><input id="countdownIsFeatured" type="checkbox" /> Countdown principale</label>
             <label class="inline-flex items-center gap-2 font-semibold"><input id="countdownActive" type="checkbox" checked /> Attivo</label>

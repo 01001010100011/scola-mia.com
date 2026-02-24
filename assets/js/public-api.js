@@ -72,7 +72,7 @@ export async function getCountdownEvents() {
   const nowIso = new Date().toISOString();
   const { data, error } = await supabase
     .from("countdowns")
-    .select("id,slug,title,target_at,is_featured,active")
+    .select("id,slug,title,emoji,target_at,is_featured,active")
     .eq("active", true)
     .gte("target_at", nowIso)
     .order("is_featured", { ascending: false })
@@ -81,6 +81,7 @@ export async function getCountdownEvents() {
   if (!error) {
     return (data || []).map((item) => ({
       ...item,
+      emoji: item.emoji || "",
       slug: item.slug || item.id,
       featured: Boolean(item.is_featured)
     }));
@@ -103,7 +104,7 @@ export async function getCountdownEvents() {
 export async function getCountdownEventBySlug(slug) {
   const { data: bySlugData, error: bySlugError } = await supabase
     .from("countdowns")
-    .select("id,slug,title,target_at,is_featured,active")
+    .select("id,slug,title,emoji,target_at,is_featured,active")
     .eq("slug", slug)
     .eq("active", true)
     .limit(1)
@@ -112,6 +113,7 @@ export async function getCountdownEventBySlug(slug) {
   if (!bySlugError && bySlugData) {
     return {
       ...bySlugData,
+      emoji: bySlugData.emoji || "",
       slug: bySlugData.slug || bySlugData.id,
       featured: Boolean(bySlugData.is_featured)
     };
@@ -119,7 +121,7 @@ export async function getCountdownEventBySlug(slug) {
 
   const { data: byIdData, error: byIdError } = await supabase
     .from("countdowns")
-    .select("id,slug,title,target_at,is_featured,active")
+    .select("id,slug,title,emoji,target_at,is_featured,active")
     .eq("id", slug)
     .eq("active", true)
     .limit(1)
@@ -128,6 +130,7 @@ export async function getCountdownEventBySlug(slug) {
   if (!byIdError && byIdData) {
     return {
       ...byIdData,
+      emoji: byIdData.emoji || "",
       slug: byIdData.slug || byIdData.id,
       featured: Boolean(byIdData.is_featured)
     };
