@@ -184,10 +184,18 @@ function setInfoPopoverOpen(open) {
 function mountWorkingInfoPopover() {
   if (!workingInfoBtnEl || !workingInfoPopoverEl) return;
 
-  workingInfoBtnEl.addEventListener("click", (event) => {
-    event.stopPropagation();
+  const togglePopover = (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     const isHidden = workingInfoPopoverEl.classList.contains("hidden");
     setInfoPopoverOpen(isHidden);
+  };
+
+  workingInfoBtnEl.addEventListener("click", togglePopover);
+  workingInfoBtnEl.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") togglePopover(event);
   });
 
   workingInfoPopoverEl.addEventListener("click", (event) => {
