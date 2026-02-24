@@ -1,10 +1,17 @@
 import { getCountdownEventBySlug } from "./public-api.js";
 import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js";
-import { formatTargetDate, getRemainingParts, getRemainingTotals } from "./countdown-core.js";
+import {
+  formatTargetDate,
+  getExcludedDateKeys2026,
+  getRemainingPartsFromMs,
+  getRemainingTotalsFromMs,
+  getWorkingRemainingMs
+} from "./countdown-core.js";
 
 const titleEl = document.getElementById("countdownTitle");
 const targetEl = document.getElementById("countdownTarget");
 const statusEl = document.getElementById("countdownDetailStatus");
+const detailCardEl = document.getElementById("countdownDetailCard");
 const valuesWrap = document.getElementById("countdownValues");
 const daysEl = document.getElementById("valueDays");
 const hoursEl = document.getElementById("valueHours");
@@ -14,8 +21,12 @@ const totalsWrap = document.getElementById("countdownTotals");
 const totalHoursEl = document.getElementById("totalHours");
 const totalMinutesEl = document.getElementById("totalMinutes");
 const totalSecondsEl = document.getElementById("totalSeconds");
+const workingModeToggleEl = document.getElementById("workingCountdownToggle");
 
 let timer = null;
+let currentEvent = null;
+let workingModeEnabled = false;
+let workingExcludedDateKeys2026 = getExcludedDateKeys2026();
 
 function isMaturitaCountdownLocal(event) {
   const slug = String(event?.slug || "").trim().toLowerCase();
@@ -34,6 +45,28 @@ function formatTargetDateTimeLocal(targetAt) {
   return `${dateLabel} · ${timeLabel}`;
 }
 
+function setStatus(message = "") {
+  if (!message) {
+    statusEl.textContent = "";
+    statusEl.classList.add("hidden");
+    return;
+  }
+  statusEl.textContent = message;
+  statusEl.classList.remove("hidden");
+}
+
+function setZeroCountdowns() {
+  daysEl.textContent = "0";
+  hoursEl.textContent = "00";
+  minutesEl.textContent = "00";
+  secondsEl.textContent = "00";
+  totalHoursEl.textContent = "Mancano 0 ore";
+  totalMinutesEl.textContent = "Mancano 0 minuti";
+  totalSecondsEl.textContent = "Mancano 0 secondi";
+  totalsWrap.classList.remove("hidden");
+  valuesWrap.classList.remove("opacity-40");
+}
+
 function stopTicker() {
   if (timer) {
     clearInterval(timer);
@@ -41,31 +74,59 @@ function stopTicker() {
   }
 }
 
-function setExpiredState() {
-  stopTicker();
-  statusEl.textContent = "Evento concluso";
-  statusEl.classList.remove("hidden");
-  valuesWrap.classList.add("opacity-40");
-  totalsWrap.classList.add("hidden");
+function animateModeSwitch() {
+  [detailCardEl, valuesWrap, totalsWrap].forEach((node) => {
+    if (!node) return;
+    node.classList.remove("mode-anim");
+    void node.offsetWidth;
+    node.classList.add("mode-anim");
+  });
 }
 
-function renderTick(event) {
-  const parts = getRemainingParts(event.target_at);
-  const totals = getRemainingTotals(event.target_at);
-  if (!parts) {
-    setExpiredState();
+function getNormalRemainingMs(event) {
+  const targetMs = new Date(event?.target_at || "").getTime();
+  if (Number.isNaN(targetMs)) return 0;
+  return Math.max(0, targetMs - Date.now());
+}
+
+function getActiveRemainingMs(event) {
+  if (!workingModeEnabled) return getNormalRemainingMs(event);
+  return getWorkingRemainingMs(new Date(), event.target_at, workingExcludedDateKeys2026);
+}
+
+function renderCountdownFromDiffMs(diffMs) {
+  const parts = getRemainingPartsFromMs(diffMs);
+  const totals = getRemainingTotalsFromMs(diffMs);
+
+  if (!parts || !totals) {
+    setZeroCountdowns();
     return;
   }
+
   daysEl.textContent = String(parts.days);
   hoursEl.textContent = String(parts.hours).padStart(2, "0");
   minutesEl.textContent = String(parts.minutes).padStart(2, "0");
   secondsEl.textContent = String(parts.seconds).padStart(2, "0");
-  if (totals) {
-    totalsWrap.classList.remove("hidden");
-    totalHoursEl.textContent = `Mancano ${totals.hoursTotal} ore`;
-    totalMinutesEl.textContent = `Mancano ${totals.minutesTotal} minuti`;
-    totalSecondsEl.textContent = `Mancano ${totals.secondsTotal} secondi`;
+  totalsWrap.classList.remove("hidden");
+  totalHoursEl.textContent = `Mancano ${totals.hoursTotal} ore`;
+  totalMinutesEl.textContent = `Mancano ${totals.minutesTotal} minuti`;
+  totalSecondsEl.textContent = `Mancano ${totals.secondsTotal} secondi`;
+}
+
+function renderTick(event) {
+  const normalMs = getNormalRemainingMs(event);
+  const effectiveMs = getActiveRemainingMs(event);
+
+  renderCountdownFromDiffMs(effectiveMs);
+
+  if (normalMs <= 0) {
+    setStatus("Evento concluso");
+    return;
   }
+
+  // In modalita lavorativa e con evento in giorno escluso si arriva a 0 prima dell'evento:
+  // nessun messaggio aggiuntivo, solo valori fermi a zero.
+  setStatus("");
 }
 
 async function loadEvent(slug) {
@@ -76,6 +137,40 @@ async function loadEvent(slug) {
     console.warn("Fallback dettaglio countdown:", error);
   }
   return FALLBACK_COUNTDOWN_EVENTS.find((event) => event.slug === slug) || null;
+}
+
+function storageKeyForEvent(event) {
+  const stableId = event?.id || event?.slug || "unknown";
+  return `countdown-working-mode:${stableId}`;
+}
+
+function readWorkingModePreference(event) {
+  try {
+    return localStorage.getItem(storageKeyForEvent(event)) === "1";
+  } catch (_) {
+    return false;
+  }
+}
+
+function writeWorkingModePreference(event, enabled) {
+  try {
+    localStorage.setItem(storageKeyForEvent(event), enabled ? "1" : "0");
+  } catch (_) {
+    // ignore storage failures
+  }
+}
+
+function mountWorkingModeToggle(event) {
+  if (!workingModeToggleEl) return;
+  workingModeEnabled = readWorkingModePreference(event);
+  workingModeToggleEl.checked = workingModeEnabled;
+
+  workingModeToggleEl.addEventListener("change", () => {
+    workingModeEnabled = workingModeToggleEl.checked;
+    writeWorkingModePreference(event, workingModeEnabled);
+    animateModeSwitch();
+    renderTick(event);
+  });
 }
 
 async function bootstrap() {
@@ -95,10 +190,12 @@ async function bootstrap() {
     return;
   }
 
+  currentEvent = event;
   titleEl.textContent = countdownTitleWithEmoji(event);
   targetEl.textContent = isMaturitaCountdownLocal(event)
     ? formatTargetDateTimeLocal(event.target_at)
     : formatTargetDate(event.target_at);
+  mountWorkingModeToggle(event);
   renderTick(event);
 
   timer = setInterval(() => renderTick(event), 1000);

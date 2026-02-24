@@ -26,6 +26,38 @@
     body { font-family: "IBM Plex Sans", sans-serif; background: #f4f3ee; }
     .headline { font-family: "Bebas Neue", sans-serif; letter-spacing: .04em; }
     .detail-shell { width: min(56rem, calc(100vw - 2rem)); margin-inline: auto; }
+    .mode-anim { animation: countdownModeFade .22s ease; }
+    @keyframes countdownModeFade {
+      0% { opacity: .45; transform: translateY(2px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .countdown-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      border: 2px solid #000;
+      background: #fff;
+      transition: background-color .18s ease;
+      box-shadow: 2px 2px 0 0 #000;
+      flex-shrink: 0;
+    }
+    .countdown-switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #101010;
+      transition: transform .18s ease, background-color .18s ease;
+    }
+    input:checked + .countdown-switch {
+      background: #0c7ff2;
+    }
+    input:checked + .countdown-switch::after {
+      transform: translateX(20px);
+      background: #fff;
+    }
   </style>
 </head>
 <body class="text-ink" data-page-title="Countdown">
@@ -75,7 +107,25 @@
   <main class="max-w-7xl mx-auto px-4 md:px-8 py-10">
     <div class="detail-shell space-y-6">
       <a href="/countdown/" class="text-xs font-bold uppercase underline">Torna agli eventi</a>
-      <section class="w-full border-4 border-black bg-white p-6 md:p-10 shadow-brutal">
+      <section id="countdownDetailCard" class="w-full border-4 border-black bg-white p-6 md:p-10 shadow-brutal">
+      <div class="flex justify-end mb-4">
+        <div class="border-2 border-black bg-paper px-3 py-2 flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase">Escludi weekend e festivi</span>
+            <button
+              id="workingCountdownInfo"
+              type="button"
+              class="border-2 border-black bg-white w-6 h-6 inline-flex items-center justify-center text-[10px] font-bold"
+              title="Il countdown ignora sabati, domeniche e festività ufficiali del 2026."
+              aria-label="Il countdown ignora sabati, domeniche e festività ufficiali del 2026."
+            >i</button>
+          </div>
+          <label class="inline-flex items-center cursor-pointer">
+            <input id="workingCountdownToggle" type="checkbox" class="sr-only" />
+            <span class="countdown-switch" aria-hidden="true"></span>
+          </label>
+        </div>
+      </div>
       <p id="countdownTitle" class="headline text-6xl">Evento</p>
       <p id="countdownTarget" class="mt-2 text-sm font-semibold text-slate-600"></p>
       <p id="countdownDetailStatus" class="hidden mt-3 text-sm font-semibold text-red-700"></p>
@@ -114,9 +164,9 @@
     </div>
   </main>
 
-  <script type="module" src="/assets/js/page-label.js?v=20260224b"></script>
-  <script type="module" src="/assets/js/mobile-nav.js?v=20260224b"></script>
-  <script type="module" src="/assets/js/shared-footer.js?v=20260224b"></script>
-  <script type="module" src="/assets/js/countdown-detail.js?v=20260224b"></script>
+  <script type="module" src="/assets/js/page-label.js?v=20260224c"></script>
+  <script type="module" src="/assets/js/mobile-nav.js?v=20260224c"></script>
+  <script type="module" src="/assets/js/shared-footer.js?v=20260224c"></script>
+  <script type="module" src="/assets/js/countdown-detail.js?v=20260224c"></script>
 </body>
 </html>
