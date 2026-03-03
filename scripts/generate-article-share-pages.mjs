@@ -3,7 +3,7 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const SUPABASE_CONFIG_PATH = path.join(ROOT, "assets", "js", "supabase-config.js");
-const OUTPUT_DIR = path.join(ROOT, "articoli");
+const OUTPUT_DIR = path.join(ROOT, "article");
 const DOMAIN_FALLBACK = "scola-mia.com";
 const DEFAULT_IMAGE = "https://scola-mia.com/assets/social/og-home.png";
 
@@ -14,6 +14,14 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function toAbsoluteUrl(value, domain) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith("/")) return `https://${domain}${raw}`;
+  return `https://${domain}/${raw.replace(/^\/+/, "")}`;
 }
 
 function slugifyArticleTitle(title) {
@@ -87,7 +95,8 @@ async function fetchPublishedArticles({ url, key }) {
 
 function buildArticleHtml({ title, excerpt, imageUrl, shareUrl, canonicalUrl, redirectUrl }) {
   const safeTitle = escapeHtml(title || "Articolo");
-  const safeDescription = escapeHtml(excerpt || "Articolo pubblicato su scola-mia.com");
+  const hasDescription = Boolean(String(excerpt || "").trim());
+  const safeDescription = hasDescription ? escapeHtml(excerpt) : "";
   const safeImage = escapeHtml(imageUrl || DEFAULT_IMAGE);
   const safeShareUrl = escapeHtml(shareUrl);
   const safeCanonical = escapeHtml(canonicalUrl);
@@ -100,18 +109,18 @@ function buildArticleHtml({ title, excerpt, imageUrl, shareUrl, canonicalUrl, re
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${safeTitle} - scola-mia.com</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon-scola-mia.svg" />
-  <meta name="description" content="${safeDescription}" />
+  ${hasDescription ? `<meta name="description" content="${safeDescription}" />` : ""}
   <link rel="canonical" href="${safeCanonical}" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="Scola-Mia.com" />
   <meta property="og:locale" content="it_IT" />
   <meta property="og:url" content="${safeShareUrl}" />
   <meta property="og:title" content="${safeTitle}" />
-  <meta property="og:description" content="${safeDescription}" />
+  ${hasDescription ? `<meta property="og:description" content="${safeDescription}" />` : ""}
   <meta property="og:image" content="${safeImage}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${safeTitle}" />
-  <meta name="twitter:description" content="${safeDescription}" />
+  ${hasDescription ? `<meta name="twitter:description" content="${safeDescription}" />` : ""}
   <meta name="twitter:image" content="${safeImage}" />
   <style>
     body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f3ee; color: #101010; font-family: "IBM Plex Sans", sans-serif; }
@@ -119,7 +128,7 @@ function buildArticleHtml({ title, excerpt, imageUrl, shareUrl, canonicalUrl, re
     a { color: #0c7ff2; font-weight: 700; }
   </style>
 </head>
-<body data-article-id="${escapeHtml(redirectUrl.split("id=")[1]?.split("&")[0] || "")}">
+<body>
   <div class="wrap">
     <p>Sto aprendo l'articolo...</p>
     <p><a href="${safeRedirect}">Apri articolo</a></p>
@@ -138,15 +147,21 @@ async function main() {
   const articles = await fetchPublishedArticles(supabase);
   const slugById = buildUniqueArticleSlugs(articles);
 
-  await fs.rm(OUTPUT_DIR, { recursive: true, force: true });
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
+  const existing = await fs.readdir(OUTPUT_DIR, { withFileTypes: true });
+  for (const entry of existing) {
+    if (entry.isDirectory()) {
+      await fs.rm(path.join(OUTPUT_DIR, entry.name), { recursive: true, force: true });
+    }
+  }
 
   for (const article of articles) {
     const slug = slugById.get(article.id) || slugifyArticleTitle(article.title) || "articolo";
-    const folderName = `${article.id}${slug ? `-${slug}` : ""}`;
+    const folderName = slug;
     const folderPath = path.join(OUTPUT_DIR, folderName);
     const shareUrl = `https://${domain}/article/${slug}/`;
-    const redirectUrl = `/article/${encodeURIComponent(slug)}/`;
+    const imageUrl = toAbsoluteUrl(article.image_url, domain) || DEFAULT_IMAGE;
+    const redirectUrl = `/article/?slug=${encodeURIComponent(slug)}`;
 
     await fs.mkdir(folderPath, { recursive: true });
     await fs.writeFile(
@@ -154,7 +169,7 @@ async function main() {
       buildArticleHtml({
         title: article.title,
         excerpt: article.excerpt,
-        imageUrl: article.image_url,
+        imageUrl,
         shareUrl,
         canonicalUrl: shareUrl,
         redirectUrl
