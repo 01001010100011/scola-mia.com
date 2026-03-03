@@ -25,22 +25,10 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://scola-mia.com/countdown-detail/</loc>
-    <lastmod>2026-03-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://scola-mia.com/agenda/</loc>
     <lastmod>2026-03-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://scola-mia.com/agenda-detail/</loc>
-    <lastmod>2026-03-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://scola-mia.com/contatti/</loc>
@@ -55,31 +43,109 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://scola-mia.com/articoli/5111ff7f-2555-4030-b960-e72c524d6a4e-sciopero-degli-studenti-del-23-02-2026/</loc>
+    <loc>https://scola-mia.com/article/torniamo-fuori-ecco-come-funzionera-la-nuova-ricreazione/</loc>
     <lastmod>2026-03-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://scola-mia.com/articoli/52065fe7-6442-4507-b001-e9c4e4d2a344-articolo-prova-2/</loc>
+    <loc>https://scola-mia.com/article/sciopero-degli-studenti-del-23-02-2026/</loc>
     <lastmod>2026-03-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://scola-mia.com/articoli/56b1f0de-7a3c-48b8-9f02-7409610782a3-torniamo-fuori-ecco-come-funzionera-la-nuova-ricreazione/</loc>
+    <loc>https://scola-mia.com/article/presentazione-sito/</loc>
     <lastmod>2026-03-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://scola-mia.com/articoli/7135449f-fd3f-4bd0-960f-15ee639ca971-articolo-prova-1/</loc>
+    <loc>https://scola-mia.com/article/articolo-prova-2/</loc>
     <lastmod>2026-03-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://scola-mia.com/articoli/9d056b37-cacf-4c49-879e-d312fb4ef31f-presentazione-sito/</loc>
+    <loc>https://scola-mia.com/article/articolo-prova-1/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/prova1-202602242300/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/vacanze-pasqua-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/festa-lavoro-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/primo-giugno-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/festa-repubblica-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/termine-lezioni/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/maturita-prima-prova-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/maturita-seconda-prova-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/maturita-orali-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/countdown/maturita-suppletiva-scritti-2026/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/agenda/sciopero-studenti/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/agenda/sciopero-studenti-2/</loc>
+    <lastmod>2026-03-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://scola-mia.com/agenda/sciopero-studenti-3/</loc>
     <lastmod>2026-03-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
