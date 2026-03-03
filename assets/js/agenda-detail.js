@@ -1,5 +1,6 @@
-import { getAgendaEventById } from "./public-api.js?v=20260224e";
+import { getAgendaEventById, getAgendaEvents } from "./public-api.js?v=20260224e";
 import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { buildAgendaSlugMap, getAgendaSlug } from "./agenda-url.js?v=20260303a";
 
 const container = document.getElementById("agendaEventContainer");
 
@@ -16,18 +17,47 @@ function renderEvent(eventItem) {
 }
 
 async function bootstrap() {
-  const id = new URLSearchParams(window.location.search).get("id");
-  if (!id) {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  const pathMatch = window.location.pathname.match(/^\/agenda\/([^/]+)\/?$/);
+  const pathSlug = pathMatch ? decodeURIComponent(pathMatch[1]) : "";
+  const slug = params.get("slug") || pathSlug;
+  if (!id && !slug) {
     container.innerHTML = '<p class="text-lg font-semibold">Evento non trovato.</p>';
     return;
   }
 
   try {
-    const eventItem = await getAgendaEventById(id);
+    let eventItem = null;
+    let slugMap = new Map();
+
+    if (id) {
+      eventItem = await getAgendaEventById(id);
+      if (!eventItem) {
+        container.innerHTML = '<p class="text-lg font-semibold">Evento non disponibile.</p>';
+        return;
+      }
+      const events = await getAgendaEvents();
+      slugMap = buildAgendaSlugMap(events);
+    } else {
+      const events = await getAgendaEvents();
+      slugMap = buildAgendaSlugMap(events);
+      eventItem = events.find((item) => getAgendaSlug(item, slugMap) === slug) || null;
+    }
+
     if (!eventItem) {
       container.innerHTML = '<p class="text-lg font-semibold">Evento non disponibile.</p>';
       return;
     }
+
+    const canonicalSlug = getAgendaSlug(eventItem, slugMap);
+    if (canonicalSlug) {
+      const canonicalPath = `/agenda/${encodeURIComponent(canonicalSlug)}/`;
+      if (window.location.pathname !== canonicalPath) {
+        history.replaceState(null, "", canonicalPath);
+      }
+    }
+
     renderEvent(eventItem);
   } catch (error) {
     console.error(error);

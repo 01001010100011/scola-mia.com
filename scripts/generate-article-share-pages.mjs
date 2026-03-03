@@ -26,6 +26,25 @@ function slugifyArticleTitle(title) {
     .slice(0, 80);
 }
 
+function buildUniqueArticleSlugs(articles) {
+  const counts = new Map();
+  const slugById = new Map();
+  const sorted = [...articles].sort((a, b) => {
+    const aTime = new Date(a.created_at || a.updated_at || 0).getTime() || 0;
+    const bTime = new Date(b.created_at || b.updated_at || 0).getTime() || 0;
+    if (aTime !== bTime) return aTime - bTime;
+    return String(a.id).localeCompare(String(b.id));
+  });
+
+  for (const article of sorted) {
+    const base = slugifyArticleTitle(article.title) || "articolo";
+    const next = (counts.get(base) || 0) + 1;
+    counts.set(base, next);
+    slugById.set(article.id, next === 1 ? base : `${base}-${next}`);
+  }
+  return slugById;
+}
+
 async function resolveDomain() {
   try {
     const value = (await fs.readFile(path.join(ROOT, "CNAME"), "utf8")).trim();
@@ -47,7 +66,7 @@ async function readSupabaseConfig() {
 
 async function fetchPublishedArticles({ url, key }) {
   const endpoint = new URL(`${url}/rest/v1/articles`);
-  endpoint.searchParams.set("select", "id,title,excerpt,image_url,published,updated_at");
+  endpoint.searchParams.set("select", "id,title,excerpt,image_url,published,created_at,updated_at");
   endpoint.searchParams.set("published", "eq.true");
   endpoint.searchParams.set("order", "updated_at.desc");
 
@@ -117,16 +136,17 @@ async function main() {
   const domain = await resolveDomain();
   const supabase = await readSupabaseConfig();
   const articles = await fetchPublishedArticles(supabase);
+  const slugById = buildUniqueArticleSlugs(articles);
 
   await fs.rm(OUTPUT_DIR, { recursive: true, force: true });
   await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
   for (const article of articles) {
-    const slug = slugifyArticleTitle(article.title);
+    const slug = slugById.get(article.id) || slugifyArticleTitle(article.title) || "articolo";
     const folderName = `${article.id}${slug ? `-${slug}` : ""}`;
     const folderPath = path.join(OUTPUT_DIR, folderName);
-    const shareUrl = `https://${domain}/articoli/${folderName}/`;
-    const redirectUrl = `/article/?id=${encodeURIComponent(article.id)}${slug ? `&slug=${encodeURIComponent(slug)}` : ""}`;
+    const shareUrl = `https://${domain}/article/${slug}/`;
+    const redirectUrl = `/article/${encodeURIComponent(slug)}/`;
 
     await fs.mkdir(folderPath, { recursive: true });
     await fs.writeFile(
@@ -150,4 +170,3 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

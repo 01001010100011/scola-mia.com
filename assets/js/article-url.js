@@ -1,18 +1,24 @@
+import { buildUniqueSlugMap, slugifyText } from "./slug-utils.js?v=20260303a";
+
 export function slugifyArticleTitle(title) {
-  return String(title || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+  return slugifyText(title);
 }
 
-export function buildArticleUrl(id, title) {
-  const slug = slugifyArticleTitle(title);
-  const safeId = String(id || "").trim();
-  const params = new URLSearchParams();
-  params.set("id", safeId);
-  if (slug) params.set("slug", slug);
-  return `/article/?${params.toString()}`;
+export function buildArticleSlugMap(articles) {
+  return buildUniqueSlugMap(
+    Array.isArray(articles) ? articles : [],
+    (article) => article?.id,
+    (article) => article?.title
+  );
+}
+
+export function getArticleSlug(article, slugMap = null) {
+  const id = String(article?.id || "").trim();
+  if (slugMap instanceof Map && id && slugMap.has(id)) return slugMap.get(id);
+  return slugifyArticleTitle(article?.title) || "articolo";
+}
+
+export function buildArticleUrl(article, slugMap = null) {
+  const slug = getArticleSlug(article, slugMap);
+  return `/article/${encodeURIComponent(slug)}/`;
 }

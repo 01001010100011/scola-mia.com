@@ -209,7 +209,9 @@ function mountWorkingInfoPopover() {
 }
 
 async function bootstrap() {
-  const slug = new URLSearchParams(window.location.search).get("id");
+  const params = new URLSearchParams(window.location.search);
+  const pathMatch = window.location.pathname.match(/^\/countdown\/([^/]+)\/?$/);
+  const slug = (pathMatch ? decodeURIComponent(pathMatch[1]) : "") || params.get("id") || "";
   if (!slug) {
     statusEl.textContent = "Evento non trovato.";
     statusEl.classList.remove("hidden");
@@ -233,6 +235,13 @@ async function bootstrap() {
   mountWorkingModeToggle(event);
   mountWorkingInfoPopover();
   renderTick(event);
+
+  if (event?.slug) {
+    const canonicalPath = `/countdown/${encodeURIComponent(event.slug)}/`;
+    if (window.location.pathname !== canonicalPath) {
+      history.replaceState(null, "", canonicalPath);
+    }
+  }
 
   timer = setInterval(() => renderTick(event), 1000);
 }

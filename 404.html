@@ -32,18 +32,50 @@
     <a href="/" class="mt-6 border-2 border-black bg-accent text-white px-6 py-2.5 text-sm font-bold uppercase shadow-brutal">Torna alla Home</a>
   </main>
   <script>
-    (function handleArticleRedirectFrom404() {
+    (function handlePrettyRouteRedirectFrom404() {
       try {
-        const match = window.location.pathname.match(/^\/articoli\/([^/]+)\/?$/);
-        if (!match) return;
-        const raw = decodeURIComponent(match[1] || "");
-        const id = raw.split("-")[0];
-        if (!/^[0-9a-fA-F-]{36}$/.test(id)) return;
-        const slug = raw.slice(id.length + 1);
-        const params = new URLSearchParams();
-        params.set("id", id);
-        if (slug) params.set("slug", slug);
-        window.location.replace(`/article/?${params.toString()}`);
+        const path = window.location.pathname;
+
+        const legacyArticleMatch = path.match(/^\/articoli\/([^/]+)\/?$/);
+        if (legacyArticleMatch) {
+          const raw = decodeURIComponent(legacyArticleMatch[1] || "");
+          const id = raw.split("-")[0];
+          if (/^[0-9a-fA-F-]{36}$/.test(id)) {
+            const slug = raw.slice(id.length + 1);
+            const params = new URLSearchParams();
+            params.set("id", id);
+            if (slug) params.set("slug", slug);
+            window.location.replace(`/article/?${params.toString()}`);
+            return;
+          }
+        }
+
+        const articleMatch = path.match(/^\/article\/([^/]+)\/?$/);
+        if (articleMatch) {
+          const slug = decodeURIComponent(articleMatch[1] || "");
+          if (slug) {
+            window.location.replace(`/article/?slug=${encodeURIComponent(slug)}`);
+            return;
+          }
+        }
+
+        const countdownMatch = path.match(/^\/countdown\/([^/]+)\/?$/);
+        if (countdownMatch) {
+          const slug = decodeURIComponent(countdownMatch[1] || "");
+          if (slug) {
+            window.location.replace(`/countdown-detail/?id=${encodeURIComponent(slug)}`);
+            return;
+          }
+        }
+
+        const agendaMatch = path.match(/^\/agenda\/([^/]+)\/?$/);
+        if (agendaMatch) {
+          const slug = decodeURIComponent(agendaMatch[1] || "");
+          if (slug) {
+            window.location.replace(`/agenda-detail/?slug=${encodeURIComponent(slug)}`);
+            return;
+          }
+        }
       } catch (_) {
         // no-op: keep regular 404 fallback
       }

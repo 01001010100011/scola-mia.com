@@ -1,10 +1,11 @@
 import { getPublishedArticles } from "./public-api.js?v=20260224e";
 import { formatLocalDate } from "./supabase-client.js?v=20260224e";
-import { buildArticleUrl } from "./article-url.js?v=20260303a";
+import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260303b";
 
 const searchInput = document.getElementById("archiveSearchInput");
 const allEl = document.getElementById("allArticles");
 let publishedArticles = [];
+let articleSlugMap = new Map();
 
 function shortDate(value) {
   const date = new Date(value);
@@ -14,7 +15,7 @@ function shortDate(value) {
 function card(article) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
   const publishedShort = shortDate(article.created_at || article.updated_at);
-  const articleUrl = buildArticleUrl(article.id, article.title);
+  const articleUrl = buildArticleUrl(article, articleSlugMap);
   return `
     <a href="${articleUrl}" class="block border-2 border-black bg-white p-4 shadow-brutal h-full flex flex-col">
       <div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden bg-slate-100 flex items-center justify-center">
@@ -48,6 +49,7 @@ function render(query = "") {
 async function bootstrap() {
   try {
     publishedArticles = await getPublishedArticles();
+    articleSlugMap = buildArticleSlugMap(publishedArticles);
   } catch (error) {
     console.error(error);
     allEl.innerHTML = '<div class="md:col-span-3 border-2 border-black bg-white p-4">Errore caricamento articoli.</div>';

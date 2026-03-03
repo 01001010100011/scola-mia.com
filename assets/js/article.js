@@ -1,6 +1,6 @@
-import { getArticleById } from "./public-api.js?v=20260224e";
+import { getArticleById, getPublishedArticles } from "./public-api.js?v=20260224e";
 import { escapeHtml, formatLocalDate, supabase } from "./supabase-client.js?v=20260224e";
-import { slugifyArticleTitle } from "./article-url.js?v=20260303a";
+import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20260303b";
 import { markdownToHtml } from "./markdown.js?v=20260303c";
 
 const container = document.getElementById("articleContainer");
@@ -65,29 +65,46 @@ function renderArticle(article) {
 
 async function bootstrap() {
   const params = new URLSearchParams(window.location.search);
-  const pathMatch = window.location.pathname.match(/^\/articoli\/([^/]+)\/?$/);
-  const pathId = pathMatch ? decodeURIComponent(pathMatch[1]).split("-")[0] : "";
+  const pathMatch = window.location.pathname.match(/^\/article\/([^/]+)\/?$/);
+  const pathSlug = pathMatch ? decodeURIComponent(pathMatch[1]) : "";
   const bodyId = document.body?.dataset?.articleId || "";
-  const id = params.get("id") || pathId || bodyId;
-  if (!id) {
+  const id = params.get("id") || bodyId;
+  const slug = params.get("slug") || pathSlug;
+  if (!id && !slug) {
     container.innerHTML = '<p class="text-lg font-semibold">Articolo non trovato.</p>';
     return;
   }
 
   try {
     const allowDraft = await isAuthenticated();
-    const article = await getArticleById(id, allowDraft);
+    let article = null;
+    let slugMap = new Map();
 
-    if (!article) {
-      container.innerHTML = '<p class="text-lg font-semibold">Articolo non disponibile.</p>';
-      return;
+    if (id) {
+      article = await getArticleById(id, allowDraft);
+      if (!article) {
+        container.innerHTML = '<p class="text-lg font-semibold">Articolo non disponibile.</p>';
+        return;
+      }
+      const publishedList = await getPublishedArticles();
+      slugMap = buildArticleSlugMap(publishedList);
+    } else {
+      const publishedList = await getPublishedArticles();
+      slugMap = buildArticleSlugMap(publishedList);
+      const found = publishedList.find((item) => getArticleSlug(item, slugMap) === slug);
+      article = found || null;
+      if (!article) {
+        container.innerHTML = '<p class="text-lg font-semibold">Articolo non disponibile.</p>';
+        return;
+      }
     }
 
-    const expectedSlug = slugifyArticleTitle(article.title);
-    const isQueryRoute = window.location.pathname === "/article/" || window.location.pathname === "/article";
-    if (isQueryRoute && expectedSlug && params.get("slug") !== expectedSlug) {
-      params.set("slug", expectedSlug);
-      history.replaceState(null, "", `/article/?${params.toString()}`);
+    const canonicalSlug = getArticleSlug(article, slugMap);
+    if (canonicalSlug) {
+      const canonicalPath = `/article/${encodeURIComponent(canonicalSlug)}/`;
+      if (window.location.pathname !== canonicalPath) {
+        history.replaceState(null, "", canonicalPath);
+      }
     }
 
     renderArticle(article);

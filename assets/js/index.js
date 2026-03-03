@@ -2,7 +2,9 @@ import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishe
 import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20260224e";
 import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20260224e";
 import { formatLocalDate } from "./supabase-client.js?v=20260224e";
-import { buildArticleUrl } from "./article-url.js?v=20260303a";
+import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260303b";
+import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
+import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
 
 const grid = document.getElementById("articlesGrid");
 const featured = document.getElementById("featuredArticles");
@@ -37,10 +39,10 @@ function shortDate(value) {
   return Number.isNaN(date.getTime()) ? "data non disponibile" : date.toLocaleDateString("it-IT");
 }
 
-function articleCard(article) {
+function articleCard(article, articleSlugMap) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
   const publishedShort = shortDate(article.created_at || article.updated_at);
-  const articleUrl = buildArticleUrl(article.id, article.title);
+  const articleUrl = buildArticleUrl(article, articleSlugMap);
   return `
     <a href="${articleUrl}" class="block border-2 border-black bg-white p-5 shadow-brutal lift transition-all h-full flex flex-col">
       <div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden bg-slate-100 flex items-center justify-center">
@@ -60,9 +62,9 @@ function articleCard(article) {
   `;
 }
 
-function featuredCard(article, index) {
+function featuredCard(article, index, articleSlugMap) {
   return `
-    <a href="${buildArticleUrl(article.id, article.title)}" class="stagger block border-2 border-white/60 p-4 hover:bg-white hover:text-black transition-colors" style="animation-delay:${index * 0.1}s">
+    <a href="${buildArticleUrl(article, articleSlugMap)}" class="stagger block border-2 border-white/60 p-4 hover:bg-white hover:text-black transition-colors" style="animation-delay:${index * 0.1}s">
       ${article.image_url ? `<div class="mb-2 border border-white/60 aspect-[16/9] overflow-hidden"><img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" /></div>` : ""}
       <p class="text-sm font-semibold uppercase tracking-wide opacity-90">${article.category}</p>
       <h3 class="text-lg font-bold mt-1">${article.title}</h3>
@@ -70,10 +72,10 @@ function featuredCard(article, index) {
   `;
 }
 
-function agendaCard(item) {
+function agendaCard(item, agendaSlugMap) {
   const dateLabel = formatLocalDate(item.date) || "Data da definire";
   return `
-    <a href="/agenda-detail/?id=${encodeURIComponent(item.id)}" class="block border-2 border-white p-4 hover:bg-white hover:text-black transition-colors">
+    <a href="${buildAgendaUrl(item, agendaSlugMap)}" class="block border-2 border-white p-4 hover:bg-white hover:text-black transition-colors">
       <p class="text-xs uppercase font-bold opacity-80">${item.category}</p>
       <h3 class="mt-1 font-semibold">${item.title}</h3>
       <p class="mt-2 text-xs uppercase font-bold">${dateLabel}</p>
@@ -89,7 +91,7 @@ function sortByTargetDate(events) {
 function countdownHomeFeaturedCard(event) {
   const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
   return `
-    <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
+    <a href="${buildCountdownUrl(event)}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
       <p class="text-xs uppercase font-bold tracking-wide opacity-80">Countdown principale</p>
       <h3 class="headline text-6xl mt-2">${countdownTitleWithEmoji(event)}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-4 text-2xl font-bold">${formatCountdown(event.target_at)}</p>
@@ -102,7 +104,7 @@ function countdownHomeFeaturedCard(event) {
 function countdownHomeCard(event) {
   const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
   return `
-    <a href="/countdown-detail/?id=${encodeURIComponent(event.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
+    <a href="${buildCountdownUrl(event)}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
       <h3 class="headline text-4xl mt-1">${countdownTitleWithEmoji(event)}</h3>
       <p data-home-countdown-value="${event.slug}" class="mt-3 text-lg font-bold">${formatCountdown(event.target_at)}</p>
       <p class="mt-2 text-xs uppercase font-semibold text-slate-500">${dateLabel}</p>
@@ -193,10 +195,11 @@ async function renderHome() {
   ]);
 
   const published = articlesRes.status === "fulfilled" ? articlesRes.value : [];
+  const articleSlugMap = buildArticleSlugMap(published);
   const top = published.slice(0, 3);
   const presentationArticle = published.find((article) => article.id === PRESENTATION_ARTICLE_ID || article.title.trim().toLowerCase() === "presentazione sito");
   if (presentationArticleBtn && presentationArticle) {
-    presentationArticleBtn.href = buildArticleUrl(presentationArticle.id, presentationArticle.title);
+    presentationArticleBtn.href = buildArticleUrl(presentationArticle, articleSlugMap);
   }
 
   if (articlesRes.status === "rejected") {
@@ -205,7 +208,7 @@ async function renderHome() {
   } else if (!top.length) {
     grid.innerHTML = '<div class="md:col-span-3 border-2 border-black bg-white p-5 shadow-brutal">Nessun articolo pubblicato.</div>';
   } else {
-    grid.innerHTML = top.map(articleCard).join("");
+    grid.innerHTML = top.map((article) => articleCard(article, articleSlugMap)).join("");
   }
 
   if (articlesRes.status === "rejected") {
@@ -218,7 +221,7 @@ async function renderHome() {
     ).slice(0, 3);
 
     featured.innerHTML = featuredArticles.length
-      ? featuredArticles.map(featuredCard).join("")
+      ? featuredArticles.map((article, index) => featuredCard(article, index, articleSlugMap)).join("")
       : '<div class="border-2 border-white/60 p-4">Nessun contenuto in evidenza.</div>';
   }
 
@@ -232,12 +235,13 @@ async function renderHome() {
     console.error(agendaRes.reason);
     homeAgendaGrid.innerHTML = '<div class="md:col-span-3 border-2 border-white p-4">Errore caricamento agenda.</div>';
   } else {
+    const agendaSlugMap = buildAgendaSlugMap(agendaRes.value);
     const upcoming = [...agendaRes.value]
       .sort((a, b) => normalizeDateValue(a.date) - normalizeDateValue(b.date))
       .slice(0, 3);
 
     homeAgendaGrid.innerHTML = upcoming.length
-      ? upcoming.map(agendaCard).join("")
+      ? upcoming.map((item) => agendaCard(item, agendaSlugMap)).join("")
       : '<div class="md:col-span-3 border-2 border-white p-4">Nessun evento agenda disponibile.</div>';
   }
 }

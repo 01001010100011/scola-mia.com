@@ -10,7 +10,9 @@ import {
 import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20260224e";
 import { formatTargetDate } from "./countdown-core.js?v=20260224e";
 import { formatLocalDate } from "./supabase-client.js?v=20260224e";
-import { buildArticleUrl } from "./article-url.js?v=20260303a";
+import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260303b";
+import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
+import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
 
 const articleResultsEl = document.getElementById("articleResults");
 const agendaResultsEl = document.getElementById("agendaResults");
@@ -21,6 +23,8 @@ const searchInput = document.getElementById("searchInput");
 let articles = [];
 let events = [];
 let countdowns = [];
+let articleSlugMap = new Map();
+let agendaSlugMap = new Map();
 
 function isMobileContext() {
   return window.matchMedia("(max-width: 1023px)").matches
@@ -76,7 +80,7 @@ function render(query = "") {
 
   articleResultsEl.innerHTML = articleResults.length
     ? articleResults.map((item) => `
-        <a href="${buildArticleUrl(item.id, item.title)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+        <a href="${buildArticleUrl(item, articleSlugMap)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           ${item.image_url ? `<div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${item.image_url}" alt="Immagine ${item.title}" class="w-full h-full object-cover" /></div>` : ""}
           <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
           <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
@@ -88,7 +92,7 @@ function render(query = "") {
 
   agendaResultsEl.innerHTML = agendaResults.length
     ? agendaResults.map((item) => {
-      const agendaUrl = item.id ? `/agenda-detail/?id=${encodeURIComponent(item.id)}` : "/agenda/";
+      const agendaUrl = buildAgendaUrl(item, agendaSlugMap);
       return `
         <a href="${agendaUrl}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
@@ -103,7 +107,7 @@ function render(query = "") {
 
   countdownResultsEl.innerHTML = countdownResults.length
     ? countdownResults.map((item) => `
-        <a href="/countdown-detail/?id=${encodeURIComponent(item.slug)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+        <a href="${buildCountdownUrl(item)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">Countdown</p>
           <h3 class="mt-2 text-lg font-semibold">${countdownTitleWithEmoji(item)}</h3>
           <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatTargetDate(item.target_at)}</p>
@@ -132,6 +136,8 @@ async function bootstrap() {
   articles = articlesRes.status === "fulfilled" ? articlesRes.value : [];
   events = eventsRes.status === "fulfilled" ? eventsRes.value : [];
   countdowns = countdownRes.status === "fulfilled" ? countdownRes.value : onlyFutureEvents(FALLBACK_COUNTDOWN_EVENTS);
+  articleSlugMap = buildArticleSlugMap(articles);
+  agendaSlugMap = buildAgendaSlugMap(events);
 
   if (articlesRes.status === "rejected") console.error(articlesRes.reason);
   if (eventsRes.status === "rejected") console.error(eventsRes.reason);

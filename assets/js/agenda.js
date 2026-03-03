@@ -1,9 +1,11 @@
 import { getAgendaEvents } from "./public-api.js?v=20260224e";
 import { formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
 
 const listEl = document.getElementById("agendaList");
 const searchInput = document.getElementById("agendaSearchInput");
 let events = [];
+let agendaSlugMap = new Map();
 
 function normalizeAgendaDateInput(value) {
   if (!value) return "";
@@ -44,7 +46,7 @@ function render(query = "") {
 
   listEl.innerHTML = filtered.length
     ? filtered.map((event) => `
-        <a href="/agenda-detail/?id=${encodeURIComponent(event.id)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+        <a href="${buildAgendaUrl(event, agendaSlugMap)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs uppercase font-bold text-accent">${event.category}</p>
           <h3 class="mt-2 text-lg font-semibold">${event.title}</h3>
           <p class="mt-2 text-sm">${event.description}</p>
@@ -59,6 +61,7 @@ async function bootstrap() {
   try {
     events = await getAgendaEvents();
     events = events.sort((a, b) => agendaSortValue(a.date) - agendaSortValue(b.date));
+    agendaSlugMap = buildAgendaSlugMap(events);
   } catch (error) {
     console.error(error);
     listEl.innerHTML = '<div class="md:col-span-3 border-2 border-black bg-white p-4">Errore caricamento agenda.</div>';
