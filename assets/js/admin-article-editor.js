@@ -24,7 +24,6 @@ const importMarkdownBtn = document.getElementById("importMarkdownBtn");
 const markdownFileInput = document.getElementById("markdownFileInput");
 const markdownImportNotice = document.getElementById("markdownImportNotice");
 const markdownPreview = document.getElementById("markdownPreview");
-const creditAuthorInput = document.getElementById("creditAuthor");
 const creditPhotosInput = document.getElementById("creditPhotos");
 const creditDirectorInput = document.getElementById("creditDirector");
 
@@ -358,10 +357,9 @@ function mapRecordToForm(record) {
   articleIdInput.value = record.id;
   titleInput.value = record.title || "";
   categoryInput.value = record.category || "";
-  authorNameInput.value = record.author_name || "";
+  authorNameInput.value = record.author_name || record.credit_author || "";
   excerptInput.value = record.excerpt || "";
   contentInput.value = record.content || "";
-  creditAuthorInput.value = record.credit_author || "";
   creditPhotosInput.value = record.credit_photos || "";
   creditDirectorInput.value = record.credit_director || "";
   currentPublished = Boolean(record.published);
@@ -533,7 +531,7 @@ cancelBtn.addEventListener("click", () => {
   resetToNew();
 });
 
-[titleInput, categoryInput, authorNameInput, excerptInput, contentInput, creditAuthorInput, creditPhotosInput, creditDirectorInput].forEach((node) => {
+[titleInput, categoryInput, authorNameInput, excerptInput, contentInput, creditPhotosInput, creditDirectorInput].forEach((node) => {
   node.addEventListener("input", syncContext);
   node.addEventListener("change", syncContext);
 });
@@ -620,11 +618,10 @@ async function saveArticle(targetPublished) {
       }
     }
 
-    const creditAuthor = cleanPlainText(creditAuthorInput.value) || null;
     const creditPhotos = cleanPlainText(creditPhotosInput.value) || null;
     const creditDirector = cleanPlainText(creditDirectorInput.value) || null;
     const authorName = cleanPlainText(authorNameInput.value) || null;
-    const hasCreditsInput = Boolean(creditAuthor || creditPhotos || creditDirector);
+    const hasCreditsInput = Boolean(creditPhotos || creditDirector);
     const hasExtendedMetadataInput = Boolean(authorName || hasCreditsInput);
 
     const fullPayload = {
@@ -633,7 +630,6 @@ async function saveArticle(targetPublished) {
       author_name: authorName,
       excerpt: excerptInput.value.trim(),
       content: contentInput.value.trim(),
-      credit_author: creditAuthor,
       credit_photos: creditPhotos,
       credit_director: creditDirector,
       image_url: imageUrl || null,

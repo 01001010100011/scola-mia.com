@@ -9,7 +9,6 @@ create table if not exists public.articles (
   author_name text,
   excerpt text not null,
   content text not null,
-  credit_author text,
   credit_photos text,
   credit_director text,
   image_url text,

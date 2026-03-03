@@ -6,8 +6,9 @@ import { markdownToHtml } from "./markdown.js?v=20260303c";
 const container = document.getElementById("articleContainer");
 
 function renderCreditsSection(article) {
+  const authorName = String(article.author_name || article.credit_author || "").trim();
   const creditRows = [
-    { label: "Articolo redatto da", value: article.credit_author },
+    { label: "Autore", value: authorName },
     { label: "Foto / Grafiche", value: article.credit_photos },
     { label: "Direttore responsabile", value: article.credit_director }
   ].filter((item) => String(item.value || "").trim());
@@ -36,7 +37,7 @@ function renderArticle(article) {
   const attachments = Array.isArray(article.attachments) ? article.attachments : [];
   const publishedAt = article.created_at || article.updated_at;
   const publishedLabel = formatLocalDate(publishedAt);
-  const authorName = String(article.author_name || "").trim();
+  const authorName = String(article.author_name || article.credit_author || "").trim();
 
   container.innerHTML = `
     <p class="text-xs uppercase font-bold text-accent">${escapeHtml(article.category)}</p>
