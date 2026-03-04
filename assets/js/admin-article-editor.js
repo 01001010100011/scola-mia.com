@@ -21,8 +21,11 @@ const authorNameInput = document.getElementById("authorName");
 const excerptInput = document.getElementById("excerpt");
 const contentInput = document.getElementById("content");
 const importMarkdownBtn = document.getElementById("importMarkdownBtn");
+const importTemplateBtn = document.getElementById("importTemplateBtn");
 const markdownFileInput = document.getElementById("markdownFileInput");
+const templateFileInput = document.getElementById("templateFileInput");
 const markdownImportNotice = document.getElementById("markdownImportNotice");
+const templateImportNotice = document.getElementById("templateImportNotice");
 const markdownPreview = document.getElementById("markdownPreview");
 const creditPhotosInput = document.getElementById("creditPhotos");
 const creditDirectorInput = document.getElementById("creditDirector");
@@ -82,9 +85,25 @@ function setMarkdownImportNotice(message = "") {
   markdownImportNotice.classList.remove("hidden");
 }
 
+function setTemplateImportNotice(message = "") {
+  if (!templateImportNotice) return;
+  if (!message) {
+    templateImportNotice.classList.add("hidden");
+    templateImportNotice.textContent = "";
+    return;
+  }
+  templateImportNotice.textContent = message;
+  templateImportNotice.classList.remove("hidden");
+}
+
 function isMarkdownFile(file) {
   if (!file) return false;
   return /\.md$/i.test(file.name || "");
+}
+
+function isTemplateFile(file) {
+  if (!file) return false;
+  return /\.(md|txt)$/i.test(file.name || "");
 }
 
 function formatBytes(bytes) {
@@ -200,11 +219,61 @@ function cleanPlainText(value) {
     .trim();
 }
 
+function unquoteTemplateValue(rawValue) {
+  const value = String(rawValue || "").trim();
+  if (!value) return "";
+  const isDouble = value.startsWith("\"") && value.endsWith("\"");
+  const isSingle = value.startsWith("'") && value.endsWith("'");
+  if (!isDouble && !isSingle) return value;
+  const inner = value.slice(1, -1);
+  return inner
+    .replace(/\\n/g, " ")
+    .replace(/\\"/g, "\"")
+    .replace(/\\'/g, "'");
+}
+
+function parseArticleTemplateFile(text) {
+  const source = String(text || "").replace(/^\uFEFF/, "");
+  const frontmatterMatch = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+  const block = frontmatterMatch ? frontmatterMatch[1] : source;
+  const rawMap = {};
+
+  for (const line of block.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*?)\s*$/);
+    if (!match) continue;
+    const key = String(match[1] || "").toLowerCase();
+    const value = cleanPlainText(unquoteTemplateValue(match[2] || ""));
+    rawMap[key] = value;
+  }
+
+  const pick = (...keys) => {
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(rawMap, key)) {
+        return rawMap[key] || "";
+      }
+    }
+    return "";
+  };
+
+  return {
+    title: pick("title", "titolo"),
+    category: pick("category", "categoria"),
+    author: pick("author", "autore", "author_name"),
+    excerpt: pick("excerpt", "description", "descrizione", "estratto"),
+    photosGraphics: pick("photos_graphics", "photo_graphics", "foto_grafiche", "credit_photos"),
+    directorResponsible: pick("director_responsible", "direttore_responsabile", "credit_director")
+  };
+}
+
 function setSavingState(saving) {
   isSaving = saving;
   cancelBtn.disabled = saving;
   saveDraftBtn.disabled = saving;
   publishBtn.disabled = saving;
+  if (importMarkdownBtn) importMarkdownBtn.disabled = saving;
+  if (importTemplateBtn) importTemplateBtn.disabled = saving;
   if (!saving) {
     updateActionButtons();
     return;
@@ -544,6 +613,11 @@ importMarkdownBtn?.addEventListener("click", () => {
   markdownFileInput?.click();
 });
 
+importTemplateBtn?.addEventListener("click", () => {
+  if (isSaving) return;
+  templateFileInput?.click();
+});
+
 markdownFileInput?.addEventListener("change", async () => {
   const file = markdownFileInput.files?.[0];
   markdownFileInput.value = "";
@@ -566,6 +640,46 @@ markdownFileInput?.addEventListener("change", async () => {
   } catch (error) {
     console.error(error);
     setError("Impossibile leggere il file Markdown selezionato.");
+  }
+});
+
+templateFileInput?.addEventListener("change", async () => {
+  const file = templateFileInput.files?.[0];
+  templateFileInput.value = "";
+  if (!file) return;
+
+  setError("");
+  setTemplateImportNotice("");
+
+  if (!isTemplateFile(file)) {
+    setError("Formato non valido: carica un template articolo in .md o .txt.");
+    return;
+  }
+
+  try {
+    const fileContent = await file.text();
+    const template = parseArticleTemplateFile(fileContent);
+
+    titleInput.value = template.title || "";
+    categoryInput.value = template.category || "";
+    authorNameInput.value = template.author || "";
+    excerptInput.value = template.excerpt || "";
+    creditPhotosInput.value = template.photosGraphics || "";
+    creditDirectorInput.value = template.directorResponsible || "";
+
+    syncContext();
+    const filledCount = [
+      template.title,
+      template.category,
+      template.author,
+      template.excerpt,
+      template.photosGraphics,
+      template.directorResponsible
+    ].filter(Boolean).length;
+    setTemplateImportNotice(`Template importato: ${filledCount}/6 campi compilati da ${file.name}.`);
+  } catch (error) {
+    console.error(error);
+    setError("Impossibile leggere o interpretare il template articolo.");
   }
 });
 
