@@ -1,5 +1,5 @@
 const TARGET_ARTICLE_TITLE = "Nuova circolare sulla ricreazione: cosa cambia davvero";
-const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20260306c";
+const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20260306d";
 const BRAND_LOGO_URL = "/assets/social/site-logo-512.png";
 
 const DAY_CONFIG = [
@@ -109,18 +109,18 @@ function renderTable(rows) {
 
 function renderCards(rows) {
   return `
-    <div class="mt-4 md:hidden">
-      <div class="relative z-10 p-0 space-y-3">
+    <div class="recreation-watermark-shell relative mt-4 border-2 border-black overflow-hidden bg-white md:hidden">
+      <div class="recreation-watermark-overlay absolute inset-0 pointer-events-none grid place-items-center z-30">
+        <div class="recreation-watermark-brand flex items-center gap-2">
+          <img src="${BRAND_LOGO_URL}" alt="Logo Scola-Mia.com" class="w-16 h-16 object-contain" />
+          <span class="headline text-4xl leading-none tracking-tight">Scola-Mia.com</span>
+        </div>
+      </div>
+      <div class="relative z-10 p-3 space-y-3">
         ${rows.map((row) => `
-          <article class="recreation-watermark-shell relative border-2 border-black bg-paper p-3 overflow-hidden">
-            <div class="recreation-watermark-overlay absolute inset-0 pointer-events-none grid place-items-center z-10">
-              <div class="recreation-watermark-brand flex items-center gap-2">
-                <img src="${BRAND_LOGO_URL}" alt="Logo Scola-Mia.com" class="w-14 h-14 object-contain" />
-                <span class="headline text-3xl leading-none tracking-tight">Scola-Mia.com</span>
-              </div>
-            </div>
+          <article class="border-2 border-black bg-paper p-3">
             <h3 class="headline text-3xl">${row.day}</h3>
-            <div class="relative z-20 mt-2 space-y-2 text-sm">
+            <div class="mt-2 space-y-2 text-sm">
               <p class="border border-black/20 p-2 ${getCellClass(row.firstText)}"><span class="font-bold">Prima ricreazione:</span> ${row.firstText}</p>
               <p class="border border-black/20 p-2 ${getCellClass(row.secondText)}"><span class="font-bold">Seconda ricreazione:</span> ${row.secondText}</p>
             </div>
@@ -192,7 +192,7 @@ async function drawPdfWatermark(doc, options = {}) {
   const centerY = options.centerY || pageHeight / 2;
   const textSize = options.textSize || 52;
   const logoSize = options.logoSize || 86;
-  const angle = Number(options.angle ?? -14);
+  const angle = Number(options.angle ?? 0);
   const opacity = Number(options.opacity ?? 0.13);
   const brandText = options.brandText || "Scola-Mia.com";
   const textGap = Number(options.textGap ?? 12);
@@ -222,6 +222,26 @@ async function drawPdfWatermark(doc, options = {}) {
     doc.text(brandText, textX, baselineY, { align: "left", angle });
   });
   doc.setTextColor(0, 0, 0);
+}
+
+async function drawPdfBrandHeader(doc, y, title = "Scola Mia") {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 40;
+  const headerH = 42;
+  doc.setDrawColor(0);
+  doc.rect(margin, y - 12, pageWidth - margin * 2, headerH);
+
+  try {
+    const logoDataUrl = await fetchImageAsDataUrl(BRAND_LOGO_URL);
+    doc.addImage(logoDataUrl, "PNG", margin + 8, y - 8, 28, 28);
+  } catch (error) {
+    console.warn(error);
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text(title, margin + 44, y + 11);
+  return y + 50;
 }
 
 function drawPdfSlotText(doc, text, x, y, options = {}) {
@@ -257,13 +277,10 @@ async function exportClassTablePdf(className, classRecord, rows) {
   const doc = new JsPDF({ unit: "pt", format: "a4" });
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  let y = 46;
+  let y = 40;
+  y = await drawPdfBrandHeader(doc, y, "Scola Mia");
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("Turni ricreazione", 40, y + 14);
-
-  y += 42;
+  y += 2;
   doc.setFontSize(13);
   doc.text("Controlla i tuoi turni di ricreazione", 40, y);
 
@@ -326,7 +343,7 @@ async function exportClassTablePdf(className, classRecord, rows) {
   });
   y += 16;
   doc.setFontSize(9.5);
-  doc.text("Funzionalità ancora in beta, per qualsiasi errore o problematica contattare gli admin.", 40, y, {
+  doc.text("Funzionalità ancora in beta, per qualsiasi errore o problematica, contattare l'admin.", 40, y, {
     maxWidth: pageWidth - 80
   });
 
@@ -342,19 +359,8 @@ async function exportClassCardsPdf(className, classRecord, rows) {
   const cardWidth = pageWidth - margin * 2;
   const cardHeight = 96;
 
-  let y = 42;
-  try {
-    const logoDataUrl = await fetchImageAsDataUrl(BRAND_LOGO_URL);
-    doc.setDrawColor(0);
-    doc.rect(margin, y - 12, cardWidth, 44);
-    doc.addImage(logoDataUrl, "PNG", margin + 8, y - 8, 30, 30);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Scola Mia", margin + 46, y + 12);
-    y += 50;
-  } catch (error) {
-    console.warn(error);
-  }
+  let y = 40;
+  y = await drawPdfBrandHeader(doc, y, "Scola Mia");
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
@@ -369,18 +375,20 @@ async function exportClassCardsPdf(className, classRecord, rows) {
 
   y += 24;
 
+  const cardsTop = y;
+  const cardsHeight = rows.length * cardHeight + Math.max(0, rows.length - 1) * 10;
+  await drawPdfWatermark(doc, {
+    centerX: margin + cardWidth / 2,
+    centerY: cardsTop + cardsHeight / 2,
+    textSize: 44,
+    logoSize: 70,
+    opacity: 0.14,
+    angle: 0
+  });
+
   for (const row of rows) {
     doc.setDrawColor(0);
     doc.rect(margin, y, cardWidth, cardHeight);
-
-    await drawPdfWatermark(doc, {
-      centerX: margin + cardWidth / 2,
-      centerY: y + cardHeight / 2,
-      textSize: 30,
-      logoSize: 48,
-      opacity: 0.16,
-      angle: -10
-    });
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12.5);
@@ -402,7 +410,7 @@ async function exportClassCardsPdf(className, classRecord, rows) {
   });
   y += 16;
   doc.setFontSize(9.5);
-  doc.text("Funzionalità ancora in beta, per qualsiasi errore o problematica contattare gli admin.", margin, y, {
+  doc.text("Funzionalità ancora in beta, per qualsiasi errore o problematica, contattare l'admin.", margin, y, {
     maxWidth: pageWidth - margin * 2
   });
 
@@ -435,7 +443,7 @@ export function renderRecreationToolSection() {
       <p id="recreationClassMeta" class="mt-3 text-xs font-semibold text-slate-600"></p>
       <div id="recreationTableArea" class="mt-2"></div>
       <p class="mt-4 text-xs font-semibold">La possibilità di uscire resta sempre a discrezione del docente.</p>
-      <p class="mt-1 text-[11px] italic text-slate-600">Funzionalità ancora in beta, per qualsiasi errore o problematica contattare gli admin.</p>
+      <p class="mt-1 text-[11px] italic text-slate-600">Funzionalità ancora in beta, per qualsiasi errore o problematica, contattare l'admin.</p>
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button id="downloadRecreationPdfBtn" type="button" class="border-2 border-black bg-accent text-white px-4 py-2 text-xs font-bold uppercase shadow-brutal">
