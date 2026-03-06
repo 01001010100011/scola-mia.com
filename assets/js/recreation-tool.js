@@ -1,5 +1,5 @@
 const TARGET_ARTICLE_TITLE = "Nuova circolare sulla ricreazione: cosa cambia davvero";
-const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20260306a";
+const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20260306b";
 const BRAND_LOGO_URL = "/assets/social/site-logo-512.png";
 
 const DAY_CONFIG = [
@@ -76,15 +76,15 @@ function getCellClass(text) {
 
 function renderTable(rows) {
   return `
-    <div class="relative mt-4 border-2 border-black overflow-hidden bg-white">
-      <div class="absolute inset-0 pointer-events-none grid place-items-center z-10">
-        <div class="flex items-center gap-3 opacity-20">
-          <img src="${BRAND_LOGO_URL}" alt="Logo Scola-Mia.com" class="w-16 h-16 object-contain" />
-          <span class="headline text-6xl leading-none">Scola-Mia.com</span>
+    <div class="recreation-watermark-shell relative border-2 border-black overflow-hidden bg-white hidden md:block">
+      <div class="recreation-watermark-overlay absolute inset-0 pointer-events-none grid place-items-center z-30">
+        <div class="recreation-watermark-brand flex items-center gap-3">
+          <img src="${BRAND_LOGO_URL}" alt="Logo Scola-Mia.com" class="w-20 h-20 object-contain" />
+          <span class="headline text-6xl leading-none tracking-tight">Scola-Mia.com</span>
         </div>
       </div>
-      <div class="relative z-20 overflow-x-auto">
-        <table class="w-full min-w-[640px] border-collapse text-sm">
+      <div class="relative z-10">
+        <table class="w-full border-collapse text-sm">
           <thead>
             <tr class="bg-paper">
               <th class="border-b-2 border-black text-left p-3">Giorno</th>
@@ -104,6 +104,37 @@ function renderTable(rows) {
         </table>
       </div>
     </div>
+  `;
+}
+
+function renderCards(rows) {
+  return `
+    <div class="recreation-watermark-shell relative mt-4 border-2 border-black overflow-hidden bg-white md:hidden">
+      <div class="recreation-watermark-overlay absolute inset-0 pointer-events-none grid place-items-center z-30">
+        <div class="recreation-watermark-brand flex items-center gap-2">
+          <img src="${BRAND_LOGO_URL}" alt="Logo Scola-Mia.com" class="w-16 h-16 object-contain" />
+          <span class="headline text-4xl leading-none tracking-tight">Scola-Mia.com</span>
+        </div>
+      </div>
+      <div class="relative z-10 p-3 space-y-3">
+        ${rows.map((row) => `
+          <article class="border-2 border-black bg-paper p-3">
+            <h3 class="headline text-3xl">${row.day}</h3>
+            <div class="mt-2 space-y-2 text-sm">
+              <p class="border border-black/20 p-2 ${getCellClass(row.firstText)}"><span class="font-bold">Prima ricreazione:</span> ${row.firstText}</p>
+              <p class="border border-black/20 p-2 ${getCellClass(row.secondText)}"><span class="font-bold">Seconda ricreazione:</span> ${row.secondText}</p>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderSummary(rows) {
+  return `
+    ${renderTable(rows)}
+    ${renderCards(rows)}
   `;
 }
 
@@ -143,6 +174,43 @@ async function fetchImageAsDataUrl(url) {
   });
 }
 
+function withPdfOpacity(doc, opacity, drawFn) {
+  if (typeof doc.GState === "function") {
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity }));
+    drawFn();
+    doc.restoreGraphicsState();
+    return;
+  }
+  drawFn();
+}
+
+async function drawPdfWatermark(doc, options = {}) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const centerX = options.centerX || pageWidth / 2;
+  const centerY = options.centerY || pageHeight / 2;
+  const textSize = options.textSize || 58;
+  const logoSize = options.logoSize || 86;
+
+  try {
+    const logoDataUrl = await fetchImageAsDataUrl(BRAND_LOGO_URL);
+    withPdfOpacity(doc, 0.08, () => {
+      doc.addImage(logoDataUrl, "PNG", centerX - logoSize - 46, centerY - logoSize / 2, logoSize, logoSize);
+    });
+  } catch (error) {
+    console.warn(error);
+  }
+
+  withPdfOpacity(doc, 0.09, () => {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(55, 80, 140);
+    doc.setFontSize(textSize);
+    doc.text("Scola-Mia.com", centerX + 8, centerY + 16, { align: "left", angle: -14 });
+  });
+  doc.setTextColor(0, 0, 0);
+}
+
 async function exportClassTablePdf(className, classRecord, rows) {
   const JsPDF = await ensureJsPdfLoaded();
   const doc = new JsPDF({ unit: "pt", format: "a4" });
@@ -150,16 +218,9 @@ async function exportClassTablePdf(className, classRecord, rows) {
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = 46;
 
-  try {
-    const logoDataUrl = await fetchImageAsDataUrl(BRAND_LOGO_URL);
-    doc.addImage(logoDataUrl, "PNG", 40, y - 8, 32, 32);
-  } catch (error) {
-    console.warn(error);
-  }
-
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("Scola-Mia.com", 80, y + 14);
+  doc.text("Turni ricreazione", 40, y + 14);
 
   y += 42;
   doc.setFontSize(13);
@@ -205,15 +266,91 @@ async function exportClassTablePdf(className, classRecord, rows) {
     y += rowH;
   }
 
+  const tableTop = y - (rowH * rows.length) - rowH - 16;
+  const tableHeight = rowH * (rows.length + 1);
+  await drawPdfWatermark(doc, {
+    centerX: 40 + (colW[0] + colW[1] + colW[2]) / 2,
+    centerY: tableTop + tableHeight / 2,
+    textSize: 44,
+    logoSize: 74
+  });
+
   y += 18;
   doc.setFont("helvetica", "italic");
   doc.setFontSize(10.5);
   doc.text("La possibilità di uscire resta sempre a discrezione del docente.", 40, y, {
     maxWidth: pageWidth - 80
   });
+  y += 16;
+  doc.setFontSize(9.5);
+  doc.text("Funzionalità ancora in beta, per qualsiasi errore o problematica contattare gli admin.", 40, y, {
+    maxWidth: pageWidth - 80
+  });
 
   const safeName = className.replace(/[^A-Za-z0-9_-]/g, "-");
-  doc.save(`turni-ricreazione-${safeName}.pdf`);
+  doc.save(`turni-ricreazione-tabella-${safeName}.pdf`);
+}
+
+async function exportClassCardsPdf(className, classRecord, rows) {
+  const JsPDF = await ensureJsPdfLoaded();
+  const doc = new JsPDF({ unit: "pt", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 34;
+  const cardWidth = pageWidth - margin * 2;
+  const cardHeight = 92;
+
+  let y = 42;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Turni ricreazione - vista card", margin, y);
+
+  y += 22;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(`Classe selezionata: ${className}`, margin, y);
+  y += 16;
+  doc.text(buildClassMeta(className, classRecord), margin, y);
+
+  y += 24;
+
+  await drawPdfWatermark(doc, {
+    centerX: pageWidth / 2,
+    centerY: pageHeight / 2,
+    textSize: 58,
+    logoSize: 96
+  });
+
+  rows.forEach((row) => {
+    doc.setDrawColor(0);
+    doc.rect(margin, y, cardWidth, cardHeight);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12.5);
+    doc.text(row.day, margin + 10, y + 18);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.8);
+    doc.text(`Prima ricreazione: ${row.firstText}`, margin + 10, y + 43, { maxWidth: cardWidth - 20 });
+    doc.text(`Seconda ricreazione: ${row.secondText}`, margin + 10, y + 66, { maxWidth: cardWidth - 20 });
+
+    y += cardHeight + 10;
+  });
+
+  y += 10;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(10.5);
+  doc.text("La possibilità di uscire resta sempre a discrezione del docente.", margin, y, {
+    maxWidth: pageWidth - margin * 2
+  });
+  y += 16;
+  doc.setFontSize(9.5);
+  doc.text("Funzionalità ancora in beta, per qualsiasi errore o problematica contattare gli admin.", margin, y, {
+    maxWidth: pageWidth - margin * 2
+  });
+
+  const safeName = className.replace(/[^A-Za-z0-9_-]/g, "-");
+  doc.save(`turni-ricreazione-card-${safeName}.pdf`);
 }
 
 export function shouldRenderRecreationTool(article) {
@@ -223,6 +360,11 @@ export function shouldRenderRecreationTool(article) {
 export function renderRecreationToolSection() {
   return `
     <section id="recreationToolMount" class="mt-8 pt-6 border-t-2 border-black">
+      <style>
+        #recreationToolMount .recreation-watermark-overlay { opacity: 0.17; }
+        #recreationToolMount .recreation-watermark-brand { transform: translateY(2px); }
+        #recreationToolMount .recreation-watermark-brand span { white-space: nowrap; }
+      </style>
       <h2 class="headline text-4xl">Controlla i tuoi turni di ricreazione</h2>
       <p class="mt-2 text-sm">Seleziona la tua classe per visualizzare il riepilogo settimanale dei due turni.</p>
 
@@ -236,10 +378,16 @@ export function renderRecreationToolSection() {
       <p id="recreationClassMeta" class="mt-3 text-xs font-semibold text-slate-600"></p>
       <div id="recreationTableArea" class="mt-2"></div>
       <p class="mt-4 text-xs font-semibold">La possibilità di uscire resta sempre a discrezione del docente.</p>
+      <p class="mt-1 text-[11px] italic text-slate-600">Funzionalità ancora in beta, per qualsiasi errore o problematica contattare gli admin.</p>
 
-      <button id="downloadRecreationPdfBtn" type="button" class="mt-4 border-2 border-black bg-accent text-white px-4 py-2 text-xs font-bold uppercase shadow-brutal">
-        Scarica la tabella in PDF
-      </button>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button id="downloadRecreationPdfBtn" type="button" class="border-2 border-black bg-accent text-white px-4 py-2 text-xs font-bold uppercase shadow-brutal">
+          Scarica tabella in PDF
+        </button>
+        <button id="downloadRecreationCardsPdfBtn" type="button" class="border-2 border-black bg-black text-white px-4 py-2 text-xs font-bold uppercase shadow-brutal">
+          Scarica card in PDF
+        </button>
+      </div>
     </section>
   `;
 }
@@ -252,6 +400,7 @@ export async function initRecreationTool(article) {
   const meta = document.getElementById("recreationClassMeta");
   const tableArea = document.getElementById("recreationTableArea");
   const downloadBtn = document.getElementById("downloadRecreationPdfBtn");
+  const downloadCardsBtn = document.getElementById("downloadRecreationCardsPdfBtn");
 
   let dataset = {};
   let selectedClass = "";
@@ -288,7 +437,7 @@ export async function initRecreationTool(article) {
     const classRecord = dataset[className];
     const rows = computeWeekRows(className, classRecord);
     meta.textContent = buildClassMeta(className, classRecord);
-    tableArea.innerHTML = renderTable(rows);
+    tableArea.innerHTML = renderSummary(rows);
   };
 
   select.addEventListener("change", () => {
@@ -308,6 +457,22 @@ export async function initRecreationTool(article) {
     } catch (error) {
       console.error(error);
       window.alert("Errore durante la generazione del PDF.");
+    }
+  });
+
+  downloadCardsBtn?.addEventListener("click", async () => {
+    if (!selectedClass || !dataset[selectedClass]) {
+      window.alert("Seleziona prima una classe.");
+      return;
+    }
+
+    try {
+      const classRecord = dataset[selectedClass];
+      const rows = computeWeekRows(selectedClass, classRecord);
+      await exportClassCardsPdf(selectedClass, classRecord, rows);
+    } catch (error) {
+      console.error(error);
+      window.alert("Errore durante la generazione del PDF card.");
     }
   });
 }
