@@ -157,6 +157,7 @@ function buildArticleHtml({ title, excerpt, imageUrl, shareUrl, canonicalUrl, re
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${safeTitle} - scola-mia.com</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon-scola-mia.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   ${hasDescription ? `<meta name="description" content="${safeDescription}" />` : ""}
   <link rel="canonical" href="${safeCanonical}" />
   <meta property="og:type" content="article" />
