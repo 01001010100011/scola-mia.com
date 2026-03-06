@@ -1,5 +1,5 @@
 const TARGET_ARTICLE_TITLE = "Nuova circolare sulla ricreazione: cosa cambia davvero";
-const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20260306b";
+const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20260306c";
 const BRAND_LOGO_URL = "/assets/social/site-logo-512.png";
 
 const DAY_CONFIG = [
@@ -109,18 +109,18 @@ function renderTable(rows) {
 
 function renderCards(rows) {
   return `
-    <div class="recreation-watermark-shell relative mt-4 border-2 border-black overflow-hidden bg-white md:hidden">
-      <div class="recreation-watermark-overlay absolute inset-0 pointer-events-none grid place-items-center z-30">
-        <div class="recreation-watermark-brand flex items-center gap-2">
-          <img src="${BRAND_LOGO_URL}" alt="Logo Scola-Mia.com" class="w-16 h-16 object-contain" />
-          <span class="headline text-4xl leading-none tracking-tight">Scola-Mia.com</span>
-        </div>
-      </div>
-      <div class="relative z-10 p-3 space-y-3">
+    <div class="mt-4 md:hidden">
+      <div class="relative z-10 p-0 space-y-3">
         ${rows.map((row) => `
-          <article class="border-2 border-black bg-paper p-3">
+          <article class="recreation-watermark-shell relative border-2 border-black bg-paper p-3 overflow-hidden">
+            <div class="recreation-watermark-overlay absolute inset-0 pointer-events-none grid place-items-center z-10">
+              <div class="recreation-watermark-brand flex items-center gap-2">
+                <img src="${BRAND_LOGO_URL}" alt="Logo Scola-Mia.com" class="w-14 h-14 object-contain" />
+                <span class="headline text-3xl leading-none tracking-tight">Scola-Mia.com</span>
+              </div>
+            </div>
             <h3 class="headline text-3xl">${row.day}</h3>
-            <div class="mt-2 space-y-2 text-sm">
+            <div class="relative z-20 mt-2 space-y-2 text-sm">
               <p class="border border-black/20 p-2 ${getCellClass(row.firstText)}"><span class="font-bold">Prima ricreazione:</span> ${row.firstText}</p>
               <p class="border border-black/20 p-2 ${getCellClass(row.secondText)}"><span class="font-bold">Seconda ricreazione:</span> ${row.secondText}</p>
             </div>
@@ -190,25 +190,66 @@ async function drawPdfWatermark(doc, options = {}) {
   const pageHeight = doc.internal.pageSize.getHeight();
   const centerX = options.centerX || pageWidth / 2;
   const centerY = options.centerY || pageHeight / 2;
-  const textSize = options.textSize || 58;
+  const textSize = options.textSize || 52;
   const logoSize = options.logoSize || 86;
+  const angle = Number(options.angle ?? -14);
+  const opacity = Number(options.opacity ?? 0.13);
+  const brandText = options.brandText || "Scola-Mia.com";
+  const textGap = Number(options.textGap ?? 12);
+  const font = options.font || "helvetica";
+
+  doc.setFont(font, "bold");
+  doc.setFontSize(textSize);
+  const textWidth = doc.getTextWidth(brandText);
+  const totalWidth = logoSize + textGap + textWidth;
+  const startX = centerX - totalWidth / 2;
+  const logoX = startX;
+  const textX = logoX + logoSize + textGap;
+  const baselineY = centerY + textSize * 0.15;
 
   try {
     const logoDataUrl = await fetchImageAsDataUrl(BRAND_LOGO_URL);
-    withPdfOpacity(doc, 0.08, () => {
-      doc.addImage(logoDataUrl, "PNG", centerX - logoSize - 46, centerY - logoSize / 2, logoSize, logoSize);
+    withPdfOpacity(doc, opacity, () => {
+      doc.addImage(logoDataUrl, "PNG", logoX, centerY - logoSize / 2, logoSize, logoSize);
     });
   } catch (error) {
     console.warn(error);
   }
 
-  withPdfOpacity(doc, 0.09, () => {
-    doc.setFont("helvetica", "bold");
+  withPdfOpacity(doc, opacity, () => {
+    doc.setFont(font, "bold");
     doc.setTextColor(55, 80, 140);
-    doc.setFontSize(textSize);
-    doc.text("Scola-Mia.com", centerX + 8, centerY + 16, { align: "left", angle: -14 });
+    doc.text(brandText, textX, baselineY, { align: "left", angle });
   });
   doc.setTextColor(0, 0, 0);
+}
+
+function drawPdfSlotText(doc, text, x, y, options = {}) {
+  const maxWidth = options.maxWidth || 200;
+  const lineHeight = options.lineHeight || 12;
+  const prefix = options.prefix || "";
+  const mainColor = options.mainColor || [0, 0, 0];
+  const accentGreen = [22, 128, 61];
+  const full = `${prefix}${text}`;
+
+  if (!text.startsWith("Può uscire")) {
+    doc.setTextColor(...mainColor);
+    doc.text(full, x, y, { maxWidth });
+    doc.setTextColor(0, 0, 0);
+    return lineHeight;
+  }
+
+  const greenPart = `${prefix}Può uscire`;
+  doc.setTextColor(...accentGreen);
+  doc.text(greenPart, x, y, { maxWidth });
+
+  doc.setTextColor(...mainColor);
+  const rest = text.replace(/^Può uscire/, "");
+  const restX = x + doc.getTextWidth(greenPart);
+  doc.text(rest, restX, y, { maxWidth: Math.max(20, maxWidth - doc.getTextWidth(greenPart)) });
+  doc.setTextColor(0, 0, 0);
+
+  return lineHeight;
 }
 
 async function exportClassTablePdf(className, classRecord, rows) {
@@ -254,6 +295,7 @@ async function exportClassTablePdf(className, classRecord, rows) {
 
   y += rowH;
   doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.6);
 
   for (const row of rows) {
     doc.rect(40, y - 16, colW[0] + colW[1] + colW[2], rowH);
@@ -261,8 +303,8 @@ async function exportClassTablePdf(className, classRecord, rows) {
     doc.line(colX[2], y - 16, colX[2], y - 16 + rowH);
 
     doc.text(row.day, colX[0] + 8, y + 2);
-    doc.text(row.firstText, colX[1] + 8, y + 2, { maxWidth: colW[1] - 14 });
-    doc.text(row.secondText, colX[2] + 8, y + 2, { maxWidth: colW[2] - 14 });
+    drawPdfSlotText(doc, row.firstText, colX[1] + 8, y + 2, { maxWidth: colW[1] - 14 });
+    drawPdfSlotText(doc, row.secondText, colX[2] + 8, y + 2, { maxWidth: colW[2] - 14 });
     y += rowH;
   }
 
@@ -272,7 +314,8 @@ async function exportClassTablePdf(className, classRecord, rows) {
     centerX: 40 + (colW[0] + colW[1] + colW[2]) / 2,
     centerY: tableTop + tableHeight / 2,
     textSize: 44,
-    logoSize: 74
+    logoSize: 74,
+    opacity: 0.14
   });
 
   y += 18;
@@ -295,12 +338,24 @@ async function exportClassCardsPdf(className, classRecord, rows) {
   const JsPDF = await ensureJsPdfLoaded();
   const doc = new JsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 34;
   const cardWidth = pageWidth - margin * 2;
-  const cardHeight = 92;
+  const cardHeight = 96;
 
   let y = 42;
+  try {
+    const logoDataUrl = await fetchImageAsDataUrl(BRAND_LOGO_URL);
+    doc.setDrawColor(0);
+    doc.rect(margin, y - 12, cardWidth, 44);
+    doc.addImage(logoDataUrl, "PNG", margin + 8, y - 8, 30, 30);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Scola Mia", margin + 46, y + 12);
+    y += 50;
+  } catch (error) {
+    console.warn(error);
+  }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.text("Turni ricreazione - vista card", margin, y);
@@ -314,16 +369,18 @@ async function exportClassCardsPdf(className, classRecord, rows) {
 
   y += 24;
 
-  await drawPdfWatermark(doc, {
-    centerX: pageWidth / 2,
-    centerY: pageHeight / 2,
-    textSize: 58,
-    logoSize: 96
-  });
-
-  rows.forEach((row) => {
+  for (const row of rows) {
     doc.setDrawColor(0);
     doc.rect(margin, y, cardWidth, cardHeight);
+
+    await drawPdfWatermark(doc, {
+      centerX: margin + cardWidth / 2,
+      centerY: y + cardHeight / 2,
+      textSize: 30,
+      logoSize: 48,
+      opacity: 0.16,
+      angle: -10
+    });
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12.5);
@@ -331,11 +388,11 @@ async function exportClassCardsPdf(className, classRecord, rows) {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10.8);
-    doc.text(`Prima ricreazione: ${row.firstText}`, margin + 10, y + 43, { maxWidth: cardWidth - 20 });
-    doc.text(`Seconda ricreazione: ${row.secondText}`, margin + 10, y + 66, { maxWidth: cardWidth - 20 });
+    drawPdfSlotText(doc, row.firstText, margin + 10, y + 43, { maxWidth: cardWidth - 20, prefix: "Prima ricreazione: " });
+    drawPdfSlotText(doc, row.secondText, margin + 10, y + 66, { maxWidth: cardWidth - 20, prefix: "Seconda ricreazione: " });
 
     y += cardHeight + 10;
-  });
+  }
 
   y += 10;
   doc.setFont("helvetica", "italic");
@@ -361,7 +418,7 @@ export function renderRecreationToolSection() {
   return `
     <section id="recreationToolMount" class="mt-8 pt-6 border-t-2 border-black">
       <style>
-        #recreationToolMount .recreation-watermark-overlay { opacity: 0.17; }
+        #recreationToolMount .recreation-watermark-overlay { opacity: 0.18; }
         #recreationToolMount .recreation-watermark-brand { transform: translateY(2px); }
         #recreationToolMount .recreation-watermark-brand span { white-space: nowrap; }
       </style>
