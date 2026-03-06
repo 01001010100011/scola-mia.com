@@ -422,7 +422,10 @@ export function shouldRenderRecreationTool(article) {
   return normalize(article?.title) === normalize(TARGET_ARTICLE_TITLE);
 }
 
-export function renderRecreationToolSection() {
+export function renderRecreationToolSection(options = {}) {
+  const hideTitle = Boolean(options.hideTitle);
+  const introClass = options.introClass || "mt-2 text-sm";
+
   return `
     <section id="recreationToolMount" class="mt-8 pt-6 border-t-2 border-black">
       <style>
@@ -430,8 +433,8 @@ export function renderRecreationToolSection() {
         #recreationToolMount .recreation-watermark-brand { transform: translateY(2px); }
         #recreationToolMount .recreation-watermark-brand span { white-space: nowrap; }
       </style>
-      <h2 class="headline text-4xl">Controlla i tuoi turni di ricreazione</h2>
-      <p class="mt-2 text-sm">Seleziona la tua classe per visualizzare il riepilogo settimanale dei due turni.</p>
+      ${hideTitle ? "" : '<h2 class="headline text-4xl">Controlla i tuoi turni di ricreazione</h2>'}
+      <p class="${introClass}">Seleziona la tua classe per visualizzare il riepilogo settimanale dei due turni.</p>
 
       <div class="mt-4 max-w-md">
         <label for="recreationClassSelect" class="block text-xs font-bold uppercase mb-1">Classe</label>
