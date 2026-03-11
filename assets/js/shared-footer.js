@@ -4,6 +4,10 @@ const FOOTER_HTML = `
       <div>
         <p class="headline text-4xl">scola-mia.com</p>
         <p class="text-sm opacity-80">Liceo Statale Lorenzo Rocci, Viale della Gioventu, 16, RI | <a href="/contatti/" class="underline">Contatti</a></p>
+        <div class="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold uppercase tracking-wide">
+          <button type="button" class="underline text-left" data-cookie-preferences-trigger>Preferenze cookie</button>
+          <a href="/cookie/" class="underline">Cookie Policy</a>
+        </div>
       </div>
       <div class="text-xs uppercase font-bold tracking-wide">LR</div>
     </div>

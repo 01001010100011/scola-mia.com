@@ -9,6 +9,7 @@ const ROUTES = [
   { source: "archivio.html", route: "archivio" },
   { source: "article.html", route: "article" },
   { source: "contatti.html", route: "contatti" },
+  { source: "cookie.html", route: "cookie" },
   { source: "countdown.html", route: "countdown" },
   { source: "countdown-detail.html", route: "countdown-detail" },
   { source: "turni-ricreazione.html", route: "turni-ricreazione" },

@@ -179,6 +179,7 @@ function buildArticleHtml({ title, excerpt, imageUrl, shareUrl, canonicalUrl, re
   </style>
 </head>
 <body>
+  <script src="/assets/js/cookie-consent-bootstrap.js?v=20260311a"></script>
   <div class="wrap">
     <p>Sto aprendo l'articolo...</p>
     <p><a href="${safeRedirect}">Apri articolo</a></p>

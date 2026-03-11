@@ -16,6 +16,7 @@ const PAGE_RULES = {
   "countdown": { changefreq: "daily", priority: "0.8" },
   "agenda": { changefreq: "daily", priority: "0.8" },
   "contatti": { changefreq: "weekly", priority: "0.7" },
+  "cookie": { changefreq: "monthly", priority: "0.5" },
   "turni-ricreazione": { changefreq: "weekly", priority: "0.7" },
   "ricerca": { changefreq: "weekly", priority: "0.6" }
 };
@@ -76,7 +77,7 @@ async function resolveDomain() {
 }
 
 function publicRouteFolders() {
-  return ["archivio", "article", "countdown", "agenda", "contatti", "turni-ricreazione", "ricerca"];
+  return ["archivio", "article", "countdown", "agenda", "contatti", "cookie", "turni-ricreazione", "ricerca"];
 }
 
 async function readSupabaseConfig() {
