@@ -32,6 +32,7 @@ create table if not exists public.agenda_events (
 create table if not exists public.site_settings (
   id int primary key,
   featured_article_ids uuid[] not null default '{}',
+  maintenance_mode boolean not null default false,
   updated_at timestamptz not null default now(),
   constraint site_settings_singleton check (id = 1)
 );

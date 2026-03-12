@@ -8,6 +8,9 @@
   <link rel="apple-touch-icon" sizes="180x180" href="https://scola-mia.com/apple-touch-icon-v2.png" />
   <link rel="apple-touch-icon-precomposed" href="https://scola-mia.com/apple-touch-icon-precomposed-v2.png" />
   <script src="/assets/js/enforce-clean-url.js?v=20260311a"></script>
+  <script>document.documentElement.dataset.maintenanceGuard = "pending";</script>
+  <script type="module" src="/assets/js/maintenance-guard.js?v=20260312a"></script>
+  <style>html[data-maintenance-guard="pending"] body { opacity: 0; }</style>
   <link rel="canonical" href="https://scola-mia.com/contatti/" />
   <link rel="stylesheet" href="/assets/css/public-background.css?v=20260303a" />
   <link rel="stylesheet" href="/assets/css/cookie-consent.css?v=20260311a" />
@@ -144,49 +147,12 @@
         </span>
         <span class="material-symbols-outlined text-lg open-external" aria-hidden="true">open_in_new</span>
       </a>
-      <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-        <a
-          href="https://www.instagram.com/scolamia/"
-          target="_blank"
-          rel="noopener"
-          class="block border-2 border-black bg-paper p-5 shadow-brutal transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <p class="text-xs font-bold uppercase tracking-wide text-accent">Instagram</p>
-          <p class="mt-2 text-2xl font-semibold">@scolamia</p>
-          <p class="mt-2 text-sm text-slate-600">Scrivici su Instagram.</p>
-        </a>
-
-        <a
-          href="mailto:info@scola-mia.com"
-          class="block border-2 border-black bg-paper p-5 shadow-brutal transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <p class="text-xs font-bold uppercase tracking-wide text-accent">Email info</p>
-          <p class="mt-2 text-2xl font-semibold break-all">info@scola-mia.com</p>
-          <p class="mt-2 text-sm text-slate-600">Supporto e informazioni.</p>
-        </a>
-
-        <a
-          href="mailto:propostearticoli@scola-mia.com"
-          class="block border-2 border-black bg-paper p-5 shadow-brutal transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <p class="text-xs font-bold uppercase tracking-wide text-accent">Proposte articoli</p>
-          <p class="mt-2 text-2xl font-semibold break-all">propostearticoli@scola-mia.com</p>
-          <p class="mt-2 text-sm text-slate-600">Invia una proposta articolo.</p>
-        </a>
-
-        <a
-          href="mailto:leo@scola-mia.com"
-          class="block border-2 border-black bg-paper p-5 shadow-brutal transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          <p class="text-xs font-bold uppercase tracking-wide text-accent">Contatti admin</p>
-          <p class="mt-2 text-2xl font-semibold break-all">leo@scola-mia.com</p>
-          <p class="mt-2 text-sm text-slate-600">Contatto diretto admin.</p>
-        </a>
-      </div>
+      <div id="contactsGrid" class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5"></div>
     </section>
   </main>
   <script type="module" src="/assets/js/page-label.js?v=20260224e"></script>
   <script type="module" src="/assets/js/mobile-nav.js?v=20260224e"></script>
+  <script type="module" src="/assets/js/contacts-page.js?v=20260312a"></script>
   <script type="module" src="/assets/js/shared-footer.js?v=20260311a"></script>
   <script src="/assets/js/cookie-consent-ui.js?v=20260311a"></script>
 </body>
