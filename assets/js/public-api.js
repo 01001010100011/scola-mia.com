@@ -1,5 +1,11 @@
 import { supabase } from "./supabase-client.js?v=20260224e";
-export { CONTACTS } from "./site-content.js?v=20260312a";
+
+export const CONTACTS = [
+  { label: "Instagram", value: "@scolamia", href: "https://www.instagram.com/scolamia/" },
+  { label: "Email info", value: "info@scola-mia.com", href: "mailto:info@scola-mia.com" },
+  { label: "Proposte articoli", value: "propostearticoli@scola-mia.com", href: "mailto:propostearticoli@scola-mia.com" },
+  { label: "Contatti admin", value: "leo@scola-mia.com", href: "mailto:leo@scola-mia.com" }
+];
 
 export async function getPublishedArticles() {
   const { data, error } = await supabase
