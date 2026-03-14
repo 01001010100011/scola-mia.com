@@ -726,12 +726,6 @@ openContentAgendaBtn?.addEventListener("click", (event) => {
   renderAdminAgendaEvents();
 });
 
-openMaintenanceViewBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setContentSection("maintenance");
-  renderMaintenanceUi();
-});
-
 openArticlesViewBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   setArticleSubView("articles");
