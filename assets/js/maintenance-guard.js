@@ -23,6 +23,7 @@ function isAllowedPath(pathname) {
 }
 
 async function runMaintenanceGuard() {
+  delete document.documentElement.dataset.maintenanceGuard;
   const currentPath = normalizePath(window.location.pathname);
   const isMaintenancePage = currentPath === "/manutenzione/";
 
@@ -52,8 +53,6 @@ async function runMaintenanceGuard() {
   } catch (error) {
     console.warn("Maintenance guard non disponibile, continuo normalmente.", error);
   }
-
-  delete document.documentElement.dataset.maintenanceGuard;
 }
 
 runMaintenanceGuard();
