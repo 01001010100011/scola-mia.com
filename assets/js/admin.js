@@ -14,22 +14,20 @@ const adminStatus = document.getElementById("adminStatus");
 const articlesSection = document.getElementById("articlesSection");
 const countdownSection = document.getElementById("countdownSection");
 const agendaSection = document.getElementById("agendaSection");
-const maintenanceSection = document.getElementById("maintenanceSection");
 const articlesView = document.getElementById("articlesView");
 const featuredView = document.getElementById("featuredView");
 
 const openContentArticlesBtn = document.getElementById("openContentArticlesBtn");
 const openContentCountdownBtn = document.getElementById("openContentCountdownBtn");
 const openContentAgendaBtn = document.getElementById("openContentAgendaBtn");
-const openMaintenanceViewBtn = document.getElementById("openMaintenanceViewBtn");
 const openArticlesViewBtn = document.getElementById("openArticlesViewBtn");
 const openFeaturedViewBtn = document.getElementById("openFeaturedViewBtn");
 const newItemBtn = document.getElementById("newItemBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const maintenanceActiveBanner = document.getElementById("maintenanceActiveBanner");
 const maintenanceModeInput = document.getElementById("maintenanceModeInput");
+const maintenanceModeSaveBtn = document.getElementById("maintenanceModeSaveBtn");
 const maintenanceModeHint = document.getElementById("maintenanceModeHint");
-const maintenanceToggleShell = document.getElementById("maintenanceToggleShell");
 
 const editContextBanner = document.getElementById("editContextBanner");
 const editContextType = document.getElementById("editContextType");
@@ -55,7 +53,6 @@ const agendaSlugPreview = document.getElementById("agendaSlugPreview");
 let currentSection = "articles";
 let currentArticleSubView = "articles";
 let draggedFeaturedId = null;
-let maintenanceToggleBusy = false;
 
 let articles = [];
 let countdowns = [];
@@ -202,23 +199,18 @@ function setContentSection(section) {
   const showArticles = section === "articles";
   const showCountdown = section === "countdown";
   const showAgenda = section === "agenda";
-  const showMaintenance = section === "maintenance";
 
   articlesSection.classList.toggle("hidden", !showArticles);
   countdownSection.classList.toggle("hidden", !showCountdown);
   agendaSection.classList.toggle("hidden", !showAgenda);
-  maintenanceSection.classList.toggle("hidden", !showMaintenance);
 
   openContentArticlesBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showArticles ? "bg-black text-white" : "bg-white"}`;
   openContentCountdownBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showCountdown ? "bg-black text-white" : "bg-white"}`;
   openContentAgendaBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showAgenda ? "bg-black text-white" : "bg-white"}`;
-  openMaintenanceViewBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showMaintenance ? "bg-black text-white" : "bg-white"}`;
 
   if (showArticles) newItemBtn.textContent = "Nuovo articolo";
   if (showCountdown) newItemBtn.textContent = "Nuovo countdown";
   if (showAgenda) newItemBtn.textContent = "Nuovo evento";
-  if (showMaintenance) newItemBtn.textContent = "Nuovo articolo";
-  newItemBtn.classList.toggle("hidden", showMaintenance);
 }
 
 function setArticleSubView(view) {
@@ -307,19 +299,12 @@ async function loadData() {
 function renderMaintenanceUi() {
   if (maintenanceModeInput) {
     maintenanceModeInput.checked = Boolean(siteSettings.maintenanceMode);
-    maintenanceModeInput.disabled = maintenanceToggleBusy;
-  }
-
-  if (maintenanceToggleShell) {
-    maintenanceToggleShell.dataset.state = siteSettings.maintenanceMode ? "maintenance" : "active";
-    maintenanceToggleShell.classList.toggle("opacity-70", maintenanceToggleBusy);
-    maintenanceToggleShell.classList.toggle("pointer-events-none", maintenanceToggleBusy);
   }
 
   if (maintenanceModeHint) {
     maintenanceModeHint.textContent = siteSettings.maintenanceMode
-      ? "Il sito pubblico e temporaneamente bloccato."
-      : "Il sito e accessibile normalmente.";
+      ? "Il sito pubblico e bloccato e reindirizzato a /manutenzione. Admin, sitemap e canale WhatsApp restano raggiungibili."
+      : "Quando attivi la manutenzione, quasi tutto il sito pubblico viene bloccato. L'area admin resta pienamente accessibile.";
   }
 
   if (maintenanceActiveBanner) {
@@ -665,27 +650,17 @@ loginForm.addEventListener("submit", async (event) => {
   }
 });
 
-maintenanceModeInput?.addEventListener("change", async () => {
-  if (!(maintenanceModeInput instanceof HTMLInputElement) || maintenanceToggleBusy) return;
+maintenanceModeSaveBtn?.addEventListener("click", async () => {
+  if (!(maintenanceModeInput instanceof HTMLInputElement)) return;
 
-  const nextValue = maintenanceModeInput.checked;
-  const previousValue = Boolean(siteSettings.maintenanceMode);
-  const confirmationMessage = nextValue
-    ? "Vuoi confermare questa azione? Il sito pubblico verra messo in manutenzione."
-    : "Vuoi confermare questa azione? Il sito tornera accessibile normalmente.";
-
-  if (!window.confirm(confirmationMessage)) {
-    maintenanceModeInput.checked = previousValue;
-    renderMaintenanceUi();
-    return;
-  }
-
-  maintenanceToggleBusy = true;
-  renderMaintenanceUi();
+  maintenanceModeSaveBtn.disabled = true;
+  const originalLabel = maintenanceModeSaveBtn.textContent;
+  maintenanceModeSaveBtn.textContent = "Salvataggio...";
 
   try {
-    siteSettings = await saveSiteSettings({ maintenanceMode: nextValue });
+    siteSettings = await saveSiteSettings({ maintenanceMode: maintenanceModeInput.checked });
     featuredIds = [...siteSettings.featuredArticleIds];
+    renderMaintenanceUi();
     setAdminStatus(
       siteSettings.maintenanceMode
         ? "Modalita manutenzione attivata. Il sito pubblico verra bloccato."
@@ -693,11 +668,11 @@ maintenanceModeInput?.addEventListener("change", async () => {
     );
   } catch (error) {
     console.error(error);
-    maintenanceModeInput.checked = previousValue;
+    maintenanceModeInput.checked = Boolean(siteSettings.maintenanceMode);
     alert("Impossibile aggiornare la modalita manutenzione.");
   } finally {
-    maintenanceToggleBusy = false;
-    renderMaintenanceUi();
+    maintenanceModeSaveBtn.disabled = false;
+    maintenanceModeSaveBtn.textContent = originalLabel;
   }
 });
 
@@ -722,12 +697,6 @@ openContentAgendaBtn?.addEventListener("click", (event) => {
   event.preventDefault();
   setContentSection("agenda");
   renderAdminAgendaEvents();
-});
-
-openMaintenanceViewBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setContentSection("maintenance");
-  renderMaintenanceUi();
 });
 
 openArticlesViewBtn?.addEventListener("click", (event) => {
