@@ -27,52 +27,6 @@
   <style>
     body { font-family: "IBM Plex Sans", sans-serif; background: #f4f3ee; }
     .headline { font-family: "Bebas Neue", sans-serif; letter-spacing: 0.04em; }
-    .maintenance-toggle-shell {
-      position: relative;
-      width: min(100%, 34rem);
-    }
-    .maintenance-toggle-input {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      z-index: 2;
-    }
-    .maintenance-toggle-track {
-      position: relative;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      min-height: 7rem;
-      border: 4px solid #000;
-      background: linear-gradient(135deg, #dcfce7 0%, #86efac 100%);
-      box-shadow: 6px 6px 0 0 #000;
-      overflow: hidden;
-      transition: background 180ms ease;
-    }
-    .maintenance-toggle-shell[data-state="maintenance"] .maintenance-toggle-track {
-      background: linear-gradient(135deg, #fecaca 0%, #f87171 100%);
-    }
-    .maintenance-toggle-thumb {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      width: calc(50% - 0.5rem);
-      height: calc(100% - 1rem);
-      border: 3px solid #000;
-      background: rgba(255,255,255,0.92);
-      box-shadow: 4px 4px 0 0 #000;
-      transition: transform 180ms ease;
-    }
-    .maintenance-toggle-shell[data-state="maintenance"] .maintenance-toggle-thumb {
-      transform: translateX(calc(-100% + 0.5rem));
-    }
-    .maintenance-toggle-side {
-      position: relative;
-      z-index: 1;
-      padding: 1.25rem;
-      text-align: center;
-    }
   </style>
 </head>
 <body class="text-ink">
@@ -105,11 +59,10 @@
         </div>
       </div>
 
-      <div class="flex gap-2 flex-wrap">
+      <div class="flex gap-2">
         <button type="button" id="openContentArticlesBtn" class="border-2 border-black px-4 py-2 text-xs font-bold uppercase bg-black text-white">Gestione articoli</button>
         <button type="button" id="openContentCountdownBtn" class="border-2 border-black px-4 py-2 text-xs font-bold uppercase bg-white">Gestione countdown</button>
         <button type="button" id="openContentAgendaBtn" class="border-2 border-black px-4 py-2 text-xs font-bold uppercase bg-white">Gestione agenda</button>
-        <button type="button" id="openMaintenanceViewBtn" class="border-2 border-black px-4 py-2 text-xs font-bold uppercase bg-white">Manutenzione</button>
       </div>
 
       <section id="editContextBanner" class="hidden border-4 border-black bg-white p-4 shadow-brutal">
@@ -221,38 +174,6 @@
           <h3 class="headline text-3xl">Eventi agenda</h3>
           <div id="adminAgendaEvents" class="mt-4 space-y-3"></div>
         </section>
-      </section>
-
-      <section id="maintenanceSection" class="hidden border-4 border-black bg-white p-6 shadow-brutal">
-        <div class="max-w-3xl">
-          <p class="text-xs font-bold uppercase tracking-[0.18em] text-accent">Blocco di emergenza</p>
-          <h3 class="headline text-5xl mt-2">Modalita manutenzione</h3>
-          <p class="mt-2 text-sm text-slate-700">Usa il toggle per mettere subito offline il sito pubblico o riportarlo online.</p>
-        </div>
-
-        <div class="mt-8 flex justify-center">
-          <div id="maintenanceToggleShell" class="maintenance-toggle-shell" data-state="active">
-            <input
-              id="maintenanceModeInput"
-              type="checkbox"
-              class="maintenance-toggle-input"
-              aria-label="Attiva o disattiva la modalità manutenzione"
-            />
-            <div class="maintenance-toggle-track">
-              <div class="maintenance-toggle-thumb" aria-hidden="true"></div>
-              <div class="maintenance-toggle-side">
-                <p class="headline text-4xl leading-none">Manutenzione</p>
-                <p class="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-red-700">Sito pubblico bloccato</p>
-              </div>
-              <div class="maintenance-toggle-side">
-                <p class="headline text-4xl leading-none">Attivo</p>
-                <p class="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Sito online normalmente</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <p id="maintenanceModeHint" class="mt-6 text-center text-base font-semibold text-slate-700"></p>
       </section>
     </section>
   </main>
