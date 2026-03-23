@@ -186,6 +186,36 @@ function normalizeDateValue(value) {
   return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
 }
 
+function currentRomeDayValue() {
+  const parts = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+
+  const time = new Date(`${parts}T00:00:00`).getTime();
+  return Number.isNaN(time) ? Date.now() : time;
+}
+
+function selectHomeAgendaEvents(items, limit = 3) {
+  const validEvents = [...items].filter((item) => Number.isFinite(normalizeDateValue(item.date)));
+  const todayValue = currentRomeDayValue();
+
+  const futureEvents = validEvents
+    .filter((item) => normalizeDateValue(item.date) >= todayValue)
+    .sort((a, b) => normalizeDateValue(a.date) - normalizeDateValue(b.date));
+
+  if (futureEvents.length) {
+    return futureEvents.slice(0, limit);
+  }
+
+  return validEvents
+    .filter((item) => normalizeDateValue(item.date) < todayValue)
+    .sort((a, b) => normalizeDateValue(b.date) - normalizeDateValue(a.date))
+    .slice(0, limit);
+}
+
 async function renderHome() {
   const [articlesRes, agendaRes, featuredRes, countdownRes] = await Promise.allSettled([
     getPublishedArticles(),
@@ -236,12 +266,10 @@ async function renderHome() {
     homeAgendaGrid.innerHTML = '<div class="md:col-span-3 border-2 border-white p-4">Errore caricamento agenda.</div>';
   } else {
     const agendaSlugMap = buildAgendaSlugMap(agendaRes.value);
-    const upcoming = [...agendaRes.value]
-      .sort((a, b) => normalizeDateValue(a.date) - normalizeDateValue(b.date))
-      .slice(0, 3);
+    const selectedEvents = selectHomeAgendaEvents(agendaRes.value, 3);
 
-    homeAgendaGrid.innerHTML = upcoming.length
-      ? upcoming.map((item) => agendaCard(item, agendaSlugMap)).join("")
+    homeAgendaGrid.innerHTML = selectedEvents.length
+      ? selectedEvents.map((item) => agendaCard(item, agendaSlugMap)).join("")
       : '<div class="md:col-span-3 border-2 border-white p-4">Nessun evento agenda disponibile.</div>';
   }
 }
