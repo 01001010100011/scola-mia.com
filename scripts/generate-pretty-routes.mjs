@@ -6,6 +6,7 @@ const ROOT = process.cwd();
 const ROUTES = [
   { source: "agenda.html", route: "agenda" },
   { source: "agenda-detail.html", route: "agenda-detail" },
+  { source: "appunti_di_fisica_su_lavoro_FConservative_EPotenziale_EMeccanica_QuantitadiMoto_Urti.html", route: "appunti_di_fisica_su_lavoro_FConservative_EPotenziale_EMeccanica_QuantitadiMoto_Urti" },
   { source: "archivio.html", route: "archivio" },
   { source: "article.html", route: "article" },
   { source: "canale-whatsapp.html", route: "canale-whatsapp" },
