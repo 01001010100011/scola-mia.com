@@ -1,7 +1,7 @@
 import { getArticleById, getPublishedArticles } from "./public-api.js?v=20260224e";
 import { escapeHtml, formatLocalDate, supabase } from "./supabase-client.js?v=20260224e";
 import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20260311a";
-import { markdownToHtml } from "./markdown.js?v=20260303c";
+import { markdownToHtml } from "./markdown.js?v=20261005a";
 import { initRecreationTool, renderRecreationToolSection, shouldRenderRecreationTool } from "./recreation-tool.js?v=20260307c";
 
 const container = document.getElementById("articleContainer");
@@ -143,7 +143,7 @@ async function renderArticle(article) {
     <h1 class="headline text-6xl mt-2">${escapeHtml(article.title)}</h1>
     ${publishedLabel ? `<p class="mt-2 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
     ${authorName ? `<p class="mt-2 text-sm font-semibold">Autore: ${escapeHtml(authorName)}</p>` : ""}
-    ${article.image_url ? `<div class="mt-6 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${article.image_url}" alt="${escapeHtml(article.title)}" class="w-full h-full object-cover" /></div>` : ""}
+    ${article.image_url ? `<div class="mt-6 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${escapeHtml(article.image_url)}" alt="${escapeHtml(article.title)}" class="w-full h-full object-cover" /></div>` : ""}
     <div class="mt-8 pt-6 border-t-2 border-black prose max-w-none prose-p:leading-7">
       ${markdownHtml}
     </div>
@@ -154,7 +154,7 @@ async function renderArticle(article) {
         <h2 class="headline text-4xl">📎 Allegati</h2>
         <div class="mt-3 space-y-2">
           ${attachments.map((item) => `
-            <a href="${item.url}" download="${escapeHtml(item.name || "allegato")}" class="block border-2 border-black p-3 font-semibold underline">
+            <a href="${escapeHtml(item.url)}" download="${escapeHtml(item.name || "allegato")}" class="block border-2 border-black p-3 font-semibold underline">
               ${escapeHtml(item.name || "Allegato")}
             </a>
           `).join("")}

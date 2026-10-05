@@ -1,7 +1,7 @@
 import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishedArticles } from "./public-api.js?v=20260224e";
-import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20260224e";
-import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20260224e";
-import { formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20261005a";
+import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20261005a";
+import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
 import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260303c";
 import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
 import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
@@ -42,32 +42,36 @@ function shortDate(value) {
 function articleCard(article, articleSlugMap) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
   const publishedShort = shortDate(article.created_at || article.updated_at);
-  const articleUrl = buildArticleUrl(article, articleSlugMap);
+  const articleUrl = escapeHtml(buildArticleUrl(article, articleSlugMap));
+  const title = escapeHtml(article.title);
+  const category = escapeHtml(article.category);
+  const excerpt = escapeHtml(article.excerpt);
   return `
     <a href="${articleUrl}" class="block border-2 border-black bg-white p-5 shadow-brutal lift transition-all h-full flex flex-col">
       <div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden bg-slate-100 flex items-center justify-center">
         ${article.image_url
-          ? `<img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" />`
+          ? `<img src="${escapeHtml(article.image_url)}" alt="Immagine ${title}" class="w-full h-full object-cover" />`
           : `<div class="text-center px-3">
-              <p class="text-[11px] uppercase font-bold text-slate-600">Articolo del ${publishedShort}</p>
+              <p class="text-[11px] uppercase font-bold text-slate-600">Articolo del ${escapeHtml(publishedShort)}</p>
               <p class="mt-1 headline text-xl text-accent">scola-mia.com</p>
             </div>`}
       </div>
-      <p class="text-xs font-bold uppercase text-accent">${article.category}</p>
-      <h3 class="mt-2 text-xl font-semibold">${article.title}</h3>
-      ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
-      <p class="mt-2 text-sm flex-1">${article.excerpt}</p>
+      <p class="text-xs font-bold uppercase text-accent">${category}</p>
+      <h3 class="mt-2 text-xl font-semibold">${title}</h3>
+      ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${escapeHtml(publishedLabel)}</p>` : ""}
+      <p class="mt-2 text-sm flex-1">${excerpt}</p>
       <span class="inline-block mt-4 text-xs font-bold uppercase underline">Leggi</span>
     </a>
   `;
 }
 
 function featuredCard(article, index, articleSlugMap) {
+  const title = escapeHtml(article.title);
   return `
-    <a href="${buildArticleUrl(article, articleSlugMap)}" class="stagger block border-2 border-white/60 p-4 hover:bg-white hover:text-black transition-colors" style="animation-delay:${index * 0.1}s">
-      ${article.image_url ? `<div class="mb-2 border border-white/60 aspect-[16/9] overflow-hidden"><img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" /></div>` : ""}
-      <p class="text-sm font-semibold uppercase tracking-wide opacity-90">${article.category}</p>
-      <h3 class="text-lg font-bold mt-1">${article.title}</h3>
+    <a href="${escapeHtml(buildArticleUrl(article, articleSlugMap))}" class="stagger block border-2 border-white/60 p-4 hover:bg-white hover:text-black transition-colors" style="animation-delay:${index * 0.1}s">
+      ${article.image_url ? `<div class="mb-2 border border-white/60 aspect-[16/9] overflow-hidden"><img src="${escapeHtml(article.image_url)}" alt="Immagine ${title}" class="w-full h-full object-cover" /></div>` : ""}
+      <p class="text-sm font-semibold uppercase tracking-wide opacity-90">${escapeHtml(article.category)}</p>
+      <h3 class="text-lg font-bold mt-1">${title}</h3>
     </a>
   `;
 }
@@ -75,10 +79,10 @@ function featuredCard(article, index, articleSlugMap) {
 function agendaCard(item, agendaSlugMap) {
   const dateLabel = formatLocalDate(item.date) || "Data da definire";
   return `
-    <a href="${buildAgendaUrl(item, agendaSlugMap)}" class="block border-2 border-white p-4 hover:bg-white hover:text-black transition-colors">
-      <p class="text-xs uppercase font-bold opacity-80">${item.category}</p>
-      <h3 class="mt-1 font-semibold">${item.title}</h3>
-      <p class="mt-2 text-xs uppercase font-bold">${dateLabel}</p>
+    <a href="${escapeHtml(buildAgendaUrl(item, agendaSlugMap))}" class="block border-2 border-white p-4 hover:bg-white hover:text-black transition-colors">
+      <p class="text-xs uppercase font-bold opacity-80">${escapeHtml(item.category)}</p>
+      <h3 class="mt-1 font-semibold">${escapeHtml(item.title)}</h3>
+      <p class="mt-2 text-xs uppercase font-bold">${escapeHtml(dateLabel)}</p>
       <span class="inline-block mt-3 text-[11px] font-bold uppercase underline">Apri evento</span>
     </a>
   `;
@@ -90,12 +94,13 @@ function sortByTargetDate(events) {
 
 function countdownHomeFeaturedCard(event) {
   const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
+  const slug = escapeHtml(event.slug);
   return `
-    <a href="${buildCountdownUrl(event)}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
+    <a href="${escapeHtml(buildCountdownUrl(event))}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
       <p class="text-xs uppercase font-bold tracking-wide opacity-80">Countdown principale</p>
-      <h3 class="headline text-6xl mt-2">${countdownTitleWithEmoji(event)}</h3>
-      <p data-home-countdown-value="${event.slug}" class="mt-4 text-2xl font-bold">${formatCountdown(event.target_at)}</p>
-      <p class="mt-2 text-xs uppercase font-bold opacity-80">${dateLabel}</p>
+      <h3 class="headline text-6xl mt-2">${escapeHtml(countdownTitleWithEmoji(event))}</h3>
+      <p data-home-countdown-value="${slug}" class="mt-4 text-2xl font-bold">${escapeHtml(formatCountdown(event.target_at))}</p>
+      <p class="mt-2 text-xs uppercase font-bold opacity-80">${escapeHtml(dateLabel)}</p>
       <span class="inline-block mt-4 text-xs font-bold uppercase underline opacity-90">Vedi dettagli</span>
     </a>
   `;
@@ -103,11 +108,12 @@ function countdownHomeFeaturedCard(event) {
 
 function countdownHomeCard(event) {
   const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
+  const slug = escapeHtml(event.slug);
   return `
-    <a href="${buildCountdownUrl(event)}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
-      <h3 class="headline text-4xl mt-1">${countdownTitleWithEmoji(event)}</h3>
-      <p data-home-countdown-value="${event.slug}" class="mt-3 text-lg font-bold">${formatCountdown(event.target_at)}</p>
-      <p class="mt-2 text-xs uppercase font-semibold text-slate-500">${dateLabel}</p>
+    <a href="${escapeHtml(buildCountdownUrl(event))}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">
+      <h3 class="headline text-4xl mt-1">${escapeHtml(countdownTitleWithEmoji(event))}</h3>
+      <p data-home-countdown-value="${slug}" class="mt-3 text-lg font-bold">${escapeHtml(formatCountdown(event.target_at))}</p>
+      <p class="mt-2 text-xs uppercase font-semibold text-slate-500">${escapeHtml(dateLabel)}</p>
       <span class="inline-block mt-3 text-xs font-bold uppercase underline">Vedi dettagli</span>
     </a>
   `;

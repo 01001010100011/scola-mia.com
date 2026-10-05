@@ -1,5 +1,5 @@
 import { getAgendaEvents } from "./public-api.js?v=20260224e";
-import { formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
 import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
 
 const listEl = document.getElementById("agendaList");
@@ -45,15 +45,18 @@ function render(query = "") {
     : events.filter((event) => `${agendaDateTokens(event.date)} ${event.title} ${event.category} ${event.description}`.toLowerCase().includes(q));
 
   listEl.innerHTML = filtered.length
-    ? filtered.map((event) => `
-        <a href="${buildAgendaUrl(event, agendaSlugMap)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
-          <p class="text-xs uppercase font-bold text-accent">${event.category}</p>
-          <h3 class="mt-2 text-lg font-semibold">${event.title}</h3>
-          <p class="mt-2 text-sm">${event.description}</p>
-          <p class="mt-3 text-[11px] uppercase font-bold text-slate-500">${formatLocalDate(normalizeAgendaDateInput(event.date)) || "Data non valida"}</p>
+    ? filtered.map((event) => {
+      const dateLabel = formatLocalDate(normalizeAgendaDateInput(event.date)) || "Data non valida";
+      return `
+        <a href="${escapeHtml(buildAgendaUrl(event, agendaSlugMap))}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+          <p class="text-xs uppercase font-bold text-accent">${escapeHtml(event.category)}</p>
+          <h3 class="mt-2 text-lg font-semibold">${escapeHtml(event.title)}</h3>
+          <p class="mt-2 text-sm">${escapeHtml(event.description)}</p>
+          <p class="mt-3 text-[11px] uppercase font-bold text-slate-500">${escapeHtml(dateLabel)}</p>
           <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri evento</span>
         </a>
-      `).join("")
+      `;
+    }).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun evento trovato per questa ricerca.</div>';
 }
 

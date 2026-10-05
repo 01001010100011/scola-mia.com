@@ -7,9 +7,9 @@ import {
   getPublishedArticles,
   queryMatches
 } from "./public-api.js?v=20260224e";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20260224e";
-import { formatTargetDate } from "./countdown-core.js?v=20260224e";
-import { formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20261005a";
+import { formatTargetDate } from "./countdown-core.js?v=20261005a";
+import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
 import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260311a";
 import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
 import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
@@ -106,26 +106,30 @@ function render(query = "") {
   );
 
   articleResultsEl.innerHTML = articleResults.length
-    ? articleResults.map((item) => `
-        <a href="${buildArticleUrl(item, articleSlugMap)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
-          ${item.image_url ? `<div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${item.image_url}" alt="Immagine ${item.title}" class="w-full h-full object-cover" /></div>` : ""}
-          <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
-          <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
-          <p class="mt-2 text-sm">${item.excerpt}</p>
+    ? articleResults.map((item) => {
+      const title = escapeHtml(item.title);
+      return `
+        <a href="${escapeHtml(buildArticleUrl(item, articleSlugMap))}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+          ${item.image_url ? `<div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden"><img src="${escapeHtml(item.image_url)}" alt="Immagine ${title}" class="w-full h-full object-cover" /></div>` : ""}
+          <p class="text-xs font-bold uppercase text-accent">${escapeHtml(item.category)}</p>
+          <h3 class="mt-2 text-lg font-semibold">${title}</h3>
+          <p class="mt-2 text-sm">${escapeHtml(item.excerpt)}</p>
           <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri</span>
         </a>
-      `).join("")
+      `;
+    }).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun articolo trovato.</div>';
 
   agendaResultsEl.innerHTML = agendaResults.length
     ? agendaResults.map((item) => {
-      const agendaUrl = buildAgendaUrl(item, agendaSlugMap);
+      const agendaUrl = escapeHtml(buildAgendaUrl(item, agendaSlugMap));
+      const dateLabel = formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida";
       return `
         <a href="${agendaUrl}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
-          <p class="text-xs font-bold uppercase text-accent">${item.category}</p>
-          <h3 class="mt-2 text-lg font-semibold">${item.title}</h3>
-          <p class="mt-2 text-sm">${item.description}</p>
-          <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida"}</p>
+          <p class="text-xs font-bold uppercase text-accent">${escapeHtml(item.category)}</p>
+          <h3 class="mt-2 text-lg font-semibold">${escapeHtml(item.title)}</h3>
+          <p class="mt-2 text-sm">${escapeHtml(item.description)}</p>
+          <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${escapeHtml(dateLabel)}</p>
           <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri evento</span>
         </a>
       `;
@@ -134,10 +138,10 @@ function render(query = "") {
 
   countdownResultsEl.innerHTML = countdownResults.length
     ? countdownResults.map((item) => `
-        <a href="${buildCountdownUrl(item)}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+        <a href="${escapeHtml(buildCountdownUrl(item))}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">Countdown</p>
-          <h3 class="mt-2 text-lg font-semibold">${countdownTitleWithEmoji(item)}</h3>
-          <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${formatTargetDate(item.target_at)}</p>
+          <h3 class="mt-2 text-lg font-semibold">${escapeHtml(countdownTitleWithEmoji(item))}</h3>
+          <p class="mt-2 text-[11px] uppercase font-bold text-slate-500">${escapeHtml(formatTargetDate(item.target_at))}</p>
           <span class="inline-block mt-3 text-xs font-bold uppercase underline">Apri dettaglio</span>
         </a>
       `).join("")
@@ -145,9 +149,9 @@ function render(query = "") {
 
   contactResultsEl.innerHTML = contactResults.length
     ? contactResults.map((item) => `
-        <a href="${item.href}" ${item.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
-          <p class="text-xs font-bold uppercase text-accent">${item.label}</p>
-          <span class="mt-2 inline-block font-semibold underline">${item.value}</span>
+        <a href="${escapeHtml(item.href)}" ${item.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
+          <p class="text-xs font-bold uppercase text-accent">${escapeHtml(item.label)}</p>
+          <span class="mt-2 inline-block font-semibold underline">${escapeHtml(item.value)}</span>
         </a>
       `).join("")
     : '<div class="md:col-span-3 border-2 border-black bg-white p-4">Nessun contatto trovato.</div>';

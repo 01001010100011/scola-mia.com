@@ -1,12 +1,12 @@
 import { getCountdownEventBySlug } from "./public-api.js?v=20260224e";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js?v=20260224e";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js?v=20261005a";
 import {
   formatTargetDate,
-  getExcludedDateKeys2026,
+  getExcludedDateKeysUpTo,
   getRemainingPartsFromMs,
   getRemainingTotalsFromMs,
   getWorkingRemainingMs
-} from "./countdown-core.js?v=20260224e";
+} from "./countdown-core.js?v=20261005a";
 
 const titleEl = document.getElementById("countdownTitle");
 const targetEl = document.getElementById("countdownTarget");
@@ -28,7 +28,7 @@ const workingInfoPopoverEl = document.getElementById("workingCountdownInfoPopove
 let timer = null;
 let currentEvent = null;
 let workingModeEnabled = false;
-let workingExcludedDateKeys2026 = getExcludedDateKeys2026();
+let workingExcludedDateKeys = new Set();
 
 function isMaturitaCountdownLocal(event) {
   const slug = String(event?.slug || "").trim().toLowerCase();
@@ -93,7 +93,7 @@ function getNormalRemainingMs(event) {
 
 function getActiveRemainingMs(event) {
   if (!workingModeEnabled) return getNormalRemainingMs(event);
-  return getWorkingRemainingMs(new Date(), event.target_at, workingExcludedDateKeys2026);
+  return getWorkingRemainingMs(new Date(), event.target_at, workingExcludedDateKeys);
 }
 
 function renderCountdownFromDiffMs(diffMs) {
@@ -228,6 +228,7 @@ async function bootstrap() {
   }
 
   currentEvent = event;
+  workingExcludedDateKeys = getExcludedDateKeysUpTo(event.target_at);
   titleEl.textContent = countdownTitleWithEmoji(event);
   targetEl.textContent = isMaturitaCountdownLocal(event)
     ? formatTargetDateTimeLocal(event.target_at)

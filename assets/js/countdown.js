@@ -5,8 +5,9 @@ import {
   countdownTitleWithEmoji,
   onlyFutureEvents,
   sortCountdownEvents
-} from "./countdown-data.js?v=20260224e";
-import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20260224e";
+} from "./countdown-data.js?v=20261005a";
+import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20261005a";
+import { escapeHtml } from "./supabase-client.js?v=20260224e";
 import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
 
 const featuredEl = document.getElementById("featuredCountdown");
@@ -49,10 +50,10 @@ function filterEvents(events, query) {
 function renderCard(event, isFeatured = false) {
   const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
   return `
-    <a href="${buildCountdownUrl(event)}" class="block border-2 border-black ${isFeatured ? "bg-black text-white p-6 md:p-8" : "bg-white p-4"} shadow-brutal lift transition-all">
-      <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${countdownTitleWithEmoji(event)}</h3>
-      <p data-countdown-value="${event.slug}" class="${isFeatured ? "mt-4 text-2xl font-bold" : "mt-3 text-lg font-bold"}">${formatCountdown(event.target_at)}</p>
-      <p class="${isFeatured ? "mt-3 text-sm opacity-80" : "mt-2 text-xs uppercase font-semibold text-slate-500"}">${dateLabel}</p>
+    <a href="${escapeHtml(buildCountdownUrl(event))}" class="block border-2 border-black ${isFeatured ? "bg-black text-white p-6 md:p-8" : "bg-white p-4"} shadow-brutal lift transition-all">
+      <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${escapeHtml(countdownTitleWithEmoji(event))}</h3>
+      <p data-countdown-value="${escapeHtml(event.slug)}" class="${isFeatured ? "mt-4 text-2xl font-bold" : "mt-3 text-lg font-bold"}">${escapeHtml(formatCountdown(event.target_at))}</p>
+      <p class="${isFeatured ? "mt-3 text-sm opacity-80" : "mt-2 text-xs uppercase font-semibold text-slate-500"}">${escapeHtml(dateLabel)}</p>
       <span class="${isFeatured ? "inline-block mt-4 text-xs font-bold uppercase underline opacity-90" : "inline-block mt-3 text-xs font-bold uppercase underline"}">Vedi dettagli</span>
     </a>
   `;

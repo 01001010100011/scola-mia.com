@@ -1,7 +1,7 @@
 export const FEATURED_COUNTDOWN_SLUG = "termine-lezioni";
 
 export const FALLBACK_COUNTDOWN_EVENTS = [
-  { slug: "vacanze-pasquali-2026", title: "Vacanze di Pasqua", emoji: "🥚", target_at: "2026-04-02T00:00:00+02:00", featured: false, active: true },
+  { slug: "vacanze-pasqua-2026", title: "Vacanze di Pasqua", emoji: "🥚", target_at: "2026-04-02T00:00:00+02:00", featured: false, active: true },
   { slug: "festa-lavoro-2026", title: "Festa del Lavoro", emoji: "🧑‍🏭", target_at: "2026-05-01T00:00:00+02:00", featured: false, active: true },
   { slug: "primo-giugno-2026", title: "1 giugno", emoji: "📅", target_at: "2026-06-01T00:00:00+02:00", featured: false, active: true },
   { slug: "festa-repubblica-2026", title: "Festa della Repubblica", emoji: "🇮🇹", target_at: "2026-06-02T00:00:00+02:00", featured: false, active: true },

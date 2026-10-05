@@ -1,5 +1,5 @@
 import { getPublishedArticles } from "./public-api.js?v=20260224e";
-import { formatLocalDate } from "./supabase-client.js?v=20260224e";
+import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
 import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260303c";
 
 const searchInput = document.getElementById("archiveSearchInput");
@@ -15,21 +15,22 @@ function shortDate(value) {
 function card(article) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
   const publishedShort = shortDate(article.created_at || article.updated_at);
-  const articleUrl = buildArticleUrl(article, articleSlugMap);
+  const articleUrl = escapeHtml(buildArticleUrl(article, articleSlugMap));
+  const title = escapeHtml(article.title);
   return `
     <a href="${articleUrl}" class="block border-2 border-black bg-white p-4 shadow-brutal h-full flex flex-col">
       <div class="mb-3 border-2 border-black aspect-[16/9] overflow-hidden bg-slate-100 flex items-center justify-center">
         ${article.image_url
-          ? `<img src="${article.image_url}" alt="Immagine ${article.title}" class="w-full h-full object-cover" />`
+          ? `<img src="${escapeHtml(article.image_url)}" alt="Immagine ${title}" class="w-full h-full object-cover" />`
           : `<div class="text-center px-3">
-              <p class="text-[11px] uppercase font-bold text-slate-600">Articolo del ${publishedShort}</p>
+              <p class="text-[11px] uppercase font-bold text-slate-600">Articolo del ${escapeHtml(publishedShort)}</p>
               <p class="mt-1 headline text-xl text-accent">scola-mia.com</p>
             </div>`}
       </div>
-      <p class="text-xs font-bold uppercase text-accent">${article.category}</p>
-      <h3 class="mt-2 text-lg font-semibold">${article.title}</h3>
-      ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${publishedLabel}</p>` : ""}
-      <p class="mt-2 text-sm flex-1">${article.excerpt}</p>
+      <p class="text-xs font-bold uppercase text-accent">${escapeHtml(article.category)}</p>
+      <h3 class="mt-2 text-lg font-semibold">${title}</h3>
+      ${publishedLabel ? `<p class="mt-1 text-[11px] uppercase font-bold text-slate-500">Pubblicato il ${escapeHtml(publishedLabel)}</p>` : ""}
+      <p class="mt-2 text-sm flex-1">${escapeHtml(article.excerpt)}</p>
       <span class="inline-block mt-3 text-xs font-bold uppercase underline">Leggi</span>
     </a>
   `;
