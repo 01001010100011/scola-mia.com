@@ -32,14 +32,32 @@ jobs:
           node scripts/generate-sitemap.mjs
 
       - name: Commit and push if changed
+        env:
+          # "article" e "articoli" coprono anche i rispettivi index.html
+          GENERATED_PATHS: >-
+            sitemap.xml
+            agenda/index.html
+            agenda-detail/index.html
+            archivio/index.html
+            article
+            articoli
+            assets/social/article-og
+            contatti/index.html
+            countdown/index.html
+            countdown-detail/index.html
+            turni-ricreazione/index.html
+            ricerca/index.html
+            admin/index.html
+            admin-article-editor/index.html
         run: |
-          if git diff --quiet -- sitemap.xml agenda/index.html agenda-detail/index.html archivio/index.html article/index.html article contatti/index.html countdown/index.html countdown-detail/index.html turni-ricreazione/index.html ricerca/index.html admin/index.html admin-article-editor/index.html; then
+          # git status e non git diff: le pagine dei nuovi articoli sono file untracked
+          if [ -z "$(git status --porcelain -- $GENERATED_PATHS)" ]; then
             echo "No sitemap changes"
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add sitemap.xml agenda/index.html agenda-detail/index.html archivio/index.html article/index.html article contatti/index.html countdown/index.html countdown-detail/index.html turni-ricreazione/index.html ricerca/index.html admin/index.html admin-article-editor/index.html
+          git add -- $GENERATED_PATHS
           git commit -m "chore: auto-update sitemap and pretty routes"
           git push
