@@ -48,7 +48,7 @@
   <main class="max-w-6xl mx-auto px-4 md:px-8 py-8 space-y-6">
     <p id="editorError" class="hidden border-2 border-black bg-red-100 px-3 py-2 text-xs font-semibold"></p>
 
-    <section id="editorContext" class="border-4 border-black bg-white p-4 shadow-brutal">
+    <section id="editorContext" class="sticky top-0 z-30 border-4 border-black bg-white p-4 shadow-brutal">
       <p class="text-xs font-bold uppercase text-accent">Contesto modifica</p>
       <h2 id="editorContextType" class="headline text-4xl mt-1">Stai modificando: Articolo</h2>
       <p id="editorContextTitle" class="text-lg font-semibold mt-1">Nuovo articolo</p>
@@ -57,7 +57,6 @@
         <button type="button" id="cancelBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Annulla</button>
         <button type="button" id="saveDraftBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Salva nelle bozze</button>
         <button type="button" id="publishBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-accent text-white">Pubblica articolo</button>
-        <button type="button" id="normalizeAllImagesBtn" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase bg-white">Normalizza foto esistenti</button>
       </div>
     </section>
 
@@ -131,6 +130,6 @@
     </form>
   </main>
 
-  <script type="module" src="/assets/js/admin-article-editor.js?v=20260304a"></script>
+  <script type="module" src="/assets/js/admin-article-editor.js?v=20261006a"></script>
 </body>
 </html>

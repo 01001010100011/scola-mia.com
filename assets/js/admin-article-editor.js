@@ -1,6 +1,9 @@
 import { escapeHtml, supabase, toSlugSafeName } from "./supabase-client.js?v=20260224e";
 import { markdownToHtml } from "./markdown.js?v=20261005a";
 import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20260303c";
+import { normalizeImageFile } from "./admin-photo-tools.js?v=20261006a";
+import { ensureCurrentUserIsAdmin } from "./admin-auth.js?v=20261006a";
+import { showToast } from "./admin-ui.js?v=20261006a";
 
 const BUCKET = "article-media";
 
@@ -36,7 +39,6 @@ const removeArticleImageBtn = document.getElementById("removeArticleImageBtn");
 const articleAttachmentInput = document.getElementById("articleAttachmentInput");
 const articleAttachmentList = document.getElementById("articleAttachmentList");
 const imageNormalizationNotice = document.getElementById("imageNormalizationNotice");
-const normalizeAllImagesBtn = document.getElementById("normalizeAllImagesBtn");
 
 let originalRecord = null;
 let currentArticleImageUrl = "";
@@ -47,10 +49,6 @@ let currentPublished = false;
 let isSaving = false;
 let slugPreviewArticles = [];
 
-const MAX_IMAGE_WIDTH = 1920;
-const MAX_IMAGE_HEIGHT = 1080;
-const OUTPUT_IMAGE_TYPE = "image/jpeg";
-const OUTPUT_IMAGE_QUALITY = 0.9;
 const ARTICLE_SELECT_FIELDS = "*";
 
 function setError(message = "") {
@@ -290,23 +288,6 @@ function validateRequiredFields() {
   return "";
 }
 
-async function ensureCurrentUserIsAdmin() {
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError) throw authError;
-  const userId = authData?.user?.id;
-  if (!userId) return false;
-
-  const { data, error } = await supabase
-    .from("admin_users")
-    .select("user_id,role,active")
-    .eq("user_id", userId)
-    .eq("active", true)
-    .maybeSingle();
-
-  if (error) throw error;
-  return Boolean(data && data.role === "admin");
-}
-
 async function uploadToStorage(articleId, file, kind) {
   const stamp = Date.now();
   const cleanName = toSlugSafeName(file.name);
@@ -320,106 +301,6 @@ async function uploadToStorage(articleId, file, kind) {
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return { path, url: data.publicUrl };
-}
-
-async function uploadToStoragePath(path, file) {
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    cacheControl: "3600",
-    upsert: false
-  });
-  if (error) throw error;
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return { path, url: data.publicUrl };
-}
-
-function buildNormalizedImagePath(articleId, title = "") {
-  const stamp = Date.now();
-  const cleanTitle = toSlugSafeName(title || `article-${articleId}`) || `article-${articleId}`;
-  return `articles/${articleId}/images/${stamp}-${cleanTitle}-fhd-sdr.jpg`;
-}
-
-function withCacheBust(url) {
-  if (!url) return url;
-  const join = url.includes("?") ? "&" : "?";
-  return `${url}${join}v=${Date.now()}`;
-}
-
-function getResizedDimensions(width, height) {
-  const ratio = Math.min(MAX_IMAGE_WIDTH / width, MAX_IMAGE_HEIGHT / height, 1);
-  return {
-    width: Math.max(1, Math.round(width * ratio)),
-    height: Math.max(1, Math.round(height * ratio))
-  };
-}
-
-function canvasToBlob(canvas, type, quality) {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) resolve(blob);
-      else reject(new Error("Impossibile esportare l'immagine normalizzata."));
-    }, type, quality);
-  });
-}
-
-async function readImageBitmap(source) {
-  if ("createImageBitmap" in window) {
-    return createImageBitmap(source);
-  }
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Impossibile leggere l'immagine selezionata."));
-    img.src = URL.createObjectURL(source);
-  });
-}
-
-function getSourceDimensions(source) {
-  return {
-    width: source.width || source.videoWidth || 1,
-    height: source.height || source.videoHeight || 1
-  };
-}
-
-async function normalizeImageFile(file, baseName = "") {
-  const source = await readImageBitmap(file);
-  const sourceDims = getSourceDimensions(source);
-  const targetDims = getResizedDimensions(sourceDims.width, sourceDims.height);
-  const canvas = document.createElement("canvas");
-  canvas.width = targetDims.width;
-  canvas.height = targetDims.height;
-
-  const ctx = canvas.getContext("2d", { alpha: false, colorSpace: "srgb" });
-  if (!ctx) throw new Error("Impossibile inizializzare il motore grafico per la normalizzazione.");
-  ctx.drawImage(source, 0, 0, targetDims.width, targetDims.height);
-
-  if (typeof source.close === "function") {
-    source.close();
-  }
-
-  const blob = await canvasToBlob(canvas, OUTPUT_IMAGE_TYPE, OUTPUT_IMAGE_QUALITY);
-  const cleanBase = toSlugSafeName(baseName || file.name || "immagine").replace(/\.[a-z0-9]+$/i, "");
-  const normalizedName = `${cleanBase || "immagine"}-fhd-sdr.jpg`;
-  const normalizedFile = new File([blob], normalizedName, {
-    type: OUTPUT_IMAGE_TYPE,
-    lastModified: Date.now()
-  });
-
-  return {
-    file: normalizedFile,
-    width: targetDims.width,
-    height: targetDims.height,
-    resized: targetDims.width !== sourceDims.width || targetDims.height !== sourceDims.height,
-    sourceWidth: sourceDims.width,
-    sourceHeight: sourceDims.height
-  };
-}
-
-async function normalizeRemoteImage(url, baseName = "immagine") {
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) throw new Error("Download immagine fallito.");
-  const blob = await response.blob();
-  const file = new File([blob], `${toSlugSafeName(baseName)}.bin`, { type: blob.type || "image/jpeg" });
-  return normalizeImageFile(file, baseName);
 }
 
 function mapRecordToForm(record) {
@@ -812,6 +693,7 @@ async function saveArticle(targetPublished) {
     mapRecordToForm(saved);
     await loadArticleSlugPreviewData();
     setError("");
+    showToast(targetPublished ? "Articolo pubblicato e online." : "Bozza salvata.");
   } catch (error) {
     console.error(error);
     setError(error?.message || "Errore durante il salvataggio dell'articolo.");
@@ -826,60 +708,6 @@ publishBtn.addEventListener("click", () => saveArticle(true));
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   await saveArticle(currentPublished);
-});
-
-normalizeAllImagesBtn?.addEventListener("click", async () => {
-  if (isSaving) return;
-
-  const shouldRun = window.confirm(
-    "Normalizzare TUTTE le foto articoli esistenti in SDR e Full HD (max 1920x1080)? L'operazione può richiedere alcuni minuti."
-  );
-  if (!shouldRun) return;
-
-  try {
-    setSavingState(true);
-    setError("");
-    setImageNotice("Normalizzazione foto esistenti avviata...");
-
-    const { data: articles, error } = await supabase
-      .from("articles")
-      .select("id,title,image_url,image_path")
-      .not("image_url", "is", null);
-    if (error) throw error;
-
-    const items = (articles || []).filter((item) => item.image_url);
-    let done = 0;
-    let failed = 0;
-
-    for (const item of items) {
-      try {
-        const normalized = await normalizeRemoteImage(item.image_url, item.title || item.id);
-        const targetPath = buildNormalizedImagePath(item.id, item.title);
-        const uploaded = await uploadToStoragePath(targetPath, normalized.file);
-        const { error: updateErr } = await supabase
-          .from("articles")
-          .update({ image_url: withCacheBust(uploaded.url), image_path: uploaded.path, updated_at: new Date().toISOString() })
-          .eq("id", item.id);
-        if (updateErr) throw updateErr;
-        done += 1;
-      } catch (itemError) {
-        console.error("Normalizzazione immagine fallita per articolo:", item.id, itemError);
-        failed += 1;
-      }
-      setImageNotice(`Normalizzazione foto esistenti: ${done}/${items.length} completate${failed ? `, ${failed} con errore` : ""}`);
-    }
-
-    if (failed) {
-      setError(`Normalizzazione completata con errori: ${done} aggiornate, ${failed} non aggiornate.`);
-    }
-    setImageNotice(`Normalizzazione completata: ${done} immagini aggiornate (SDR + max Full HD).`);
-  } catch (error) {
-    console.error(error);
-    setError(error?.message || "Errore durante la normalizzazione delle immagini esistenti.");
-    setImageNotice("");
-  } finally {
-    setSavingState(false);
-  }
 });
 
 bootstrap().catch((error) => {

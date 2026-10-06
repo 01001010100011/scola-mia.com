@@ -1,9 +1,21 @@
 import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js?v=20260224e";
 import { buildAgendaSlugMap, getAgendaSlug } from "./agenda-url.js?v=20260303a";
 import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
+import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20260303c";
 import { ensureSiteSettingsRow, saveSiteSettings } from "./site-settings.js?v=20260312a";
+import { ensureCurrentUserIsAdmin } from "./admin-auth.js?v=20261006a";
+import { confirmDialog, showToast } from "./admin-ui.js?v=20261006a";
+import { normalizeAllArticleImages } from "./admin-photo-tools.js?v=20261006a";
 
 const REQUIRE_LOGIN_ON_EACH_VISIT = false;
+
+const NAV_ITEMS = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "articles", label: "Articoli" },
+  { id: "countdown", label: "Countdown" },
+  { id: "agenda", label: "Agenda" },
+  { id: "settings", label: "Impostazioni" }
+];
 
 const loginBox = document.getElementById("loginBox");
 const adminPanel = document.getElementById("adminPanel");
@@ -11,48 +23,54 @@ const loginForm = document.getElementById("loginForm");
 const loginError = document.getElementById("loginError");
 const adminStatus = document.getElementById("adminStatus");
 
-const articlesSection = document.getElementById("articlesSection");
-const countdownSection = document.getElementById("countdownSection");
-const agendaSection = document.getElementById("agendaSection");
 const articlesView = document.getElementById("articlesView");
 const featuredView = document.getElementById("featuredView");
-
-const openContentArticlesBtn = document.getElementById("openContentArticlesBtn");
-const openContentCountdownBtn = document.getElementById("openContentCountdownBtn");
-const openContentAgendaBtn = document.getElementById("openContentAgendaBtn");
 const openArticlesViewBtn = document.getElementById("openArticlesViewBtn");
 const openFeaturedViewBtn = document.getElementById("openFeaturedViewBtn");
-const newItemBtn = document.getElementById("newItemBtn");
+const newArticleBtn = document.getElementById("newArticleBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const logoutBtnDesktop = document.getElementById("logoutBtnDesktop");
 const maintenanceActiveBanner = document.getElementById("maintenanceActiveBanner");
 const maintenanceModeInput = document.getElementById("maintenanceModeInput");
 const maintenanceModeSaveBtn = document.getElementById("maintenanceModeSaveBtn");
 const maintenanceModeHint = document.getElementById("maintenanceModeHint");
-
-const editContextBanner = document.getElementById("editContextBanner");
-const editContextType = document.getElementById("editContextType");
-const editContextTitle = document.getElementById("editContextTitle");
-const editContextMeta = document.getElementById("editContextMeta");
-const editContextBackBtn = document.getElementById("editContextBackBtn");
-const editContextSaveBtn = document.getElementById("editContextSaveBtn");
-const editContextCancelBtn = document.getElementById("editContextCancelBtn");
+const normalizePhotosBtn = document.getElementById("normalizePhotosBtn");
+const normalizePhotosProgress = document.getElementById("normalizePhotosProgress");
+const settingsAccountEmail = document.getElementById("settingsAccountEmail");
 
 const adminArticlesOnline = document.getElementById("adminArticlesOnline");
 const adminArticlesDrafts = document.getElementById("adminArticlesDrafts");
 const featuredManagerList = document.getElementById("featuredManagerList");
 
-const countdownForm = document.getElementById("countdownForm");
 const adminCountdowns = document.getElementById("adminCountdowns");
 const newCountdownBtn = document.getElementById("newCountdownBtn");
+const countdownForm = document.getElementById("countdownForm");
 const countdownSlugPreview = document.getElementById("countdownSlugPreview");
 
-const agendaForm = document.getElementById("agendaForm");
 const adminAgendaEvents = document.getElementById("adminAgendaEvents");
+const newAgendaBtn = document.getElementById("newAgendaBtn");
+const agendaForm = document.getElementById("agendaForm");
 const agendaSlugPreview = document.getElementById("agendaSlugPreview");
 
-let currentSection = "articles";
+const slideoverRoot = document.getElementById("slideoverRoot");
+const slideoverPanel = document.getElementById("slideoverPanel");
+const slideoverTitle = document.getElementById("slideoverTitle");
+const slideoverMeta = document.getElementById("slideoverMeta");
+const slideoverSaveBtn = document.getElementById("slideoverSaveBtn");
+const slideoverCancelBtn = document.getElementById("slideoverCancelBtn");
+const slideoverCloseBtn = document.getElementById("slideoverCloseBtn");
+const slideoverBackdrop = document.getElementById("slideoverBackdrop");
+
+const statArticlesOnline = document.getElementById("statArticlesOnline");
+const statArticlesDrafts = document.getElementById("statArticlesDrafts");
+const statCountdownsActive = document.getElementById("statCountdownsActive");
+const statAgendaEvents = document.getElementById("statAgendaEvents");
+
+let currentView = "dashboard";
 let currentArticleSubView = "articles";
 let draggedFeaturedId = null;
+let slideoverKind = null;
+let isSlideoverSaving = false;
 
 let articles = [];
 let countdowns = [];
@@ -177,67 +195,9 @@ function renderAgendaSlugPreview() {
   agendaSlugPreview.textContent = `${window.location.origin}/agenda/${slug}/`;
 }
 
-function setEditContext(context) {
-  activeContext = context;
-  editContextBanner.classList.remove("hidden");
-  editContextType.textContent = `Stai modificando: ${context.type}`;
-  editContextTitle.textContent = context.title || "";
-  editContextMeta.textContent = context.meta || "";
-}
-
-function clearEditContext() {
-  activeContext = null;
-  editContextBanner.classList.add("hidden");
-  editContextType.textContent = "";
-  editContextTitle.textContent = "";
-  editContextMeta.textContent = "";
-}
-
-function setContentSection(section) {
-  currentSection = section;
-  clearEditContext();
-  const showArticles = section === "articles";
-  const showCountdown = section === "countdown";
-  const showAgenda = section === "agenda";
-
-  articlesSection.classList.toggle("hidden", !showArticles);
-  countdownSection.classList.toggle("hidden", !showCountdown);
-  agendaSection.classList.toggle("hidden", !showAgenda);
-
-  openContentArticlesBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showArticles ? "bg-black text-white" : "bg-white"}`;
-  openContentCountdownBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showCountdown ? "bg-black text-white" : "bg-white"}`;
-  openContentAgendaBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showAgenda ? "bg-black text-white" : "bg-white"}`;
-
-  if (showArticles) newItemBtn.textContent = "Nuovo articolo";
-  if (showCountdown) newItemBtn.textContent = "Nuovo countdown";
-  if (showAgenda) newItemBtn.textContent = "Nuovo evento";
-}
-
-function setArticleSubView(view) {
-  currentArticleSubView = view;
-  const showEdit = view === "articles";
-  articlesView.classList.toggle("hidden", !showEdit);
-  featuredView.classList.toggle("hidden", showEdit);
-  openArticlesViewBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showEdit ? "bg-black text-white" : "bg-white"}`;
-  openFeaturedViewBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showEdit ? "bg-white" : "bg-black text-white"}`;
-  if (showEdit) clearEditContext();
-}
-
-async function ensureCurrentUserIsAdmin() {
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError) throw authError;
-  const userId = authData?.user?.id;
-  if (!userId) return false;
-
-  const { data, error } = await supabase
-    .from("admin_users")
-    .select("user_id,role,active")
-    .eq("user_id", userId)
-    .eq("active", true)
-    .maybeSingle();
-
-  if (error) throw error;
-  return Boolean(data && data.role === "admin");
+function getArticleUrl(article) {
+  const slugMap = buildArticleSlugMap(articles);
+  return `/articoli/${getArticleSlug(article, slugMap)}/`;
 }
 
 function sanitizeFeaturedIds() {
@@ -296,6 +256,14 @@ async function loadData() {
   sanitizeFeaturedIds();
 }
 
+function renderStats() {
+  if (!statArticlesOnline) return;
+  statArticlesOnline.textContent = String(articles.filter((item) => item.published).length);
+  statArticlesDrafts.textContent = String(articles.filter((item) => !item.published).length);
+  statCountdownsActive.textContent = String(countdowns.filter((item) => item.active).length);
+  statAgendaEvents.textContent = String(events.length);
+}
+
 function renderMaintenanceUi() {
   if (maintenanceModeInput) {
     maintenanceModeInput.checked = Boolean(siteSettings.maintenanceMode);
@@ -315,6 +283,9 @@ function renderMaintenanceUi() {
 function articleRow(article) {
   const statusLabel = article.published ? "Online" : "Bozza";
   const statusClass = article.published ? "text-emerald-700" : "text-amber-700";
+  const viewLink = article.published
+    ? `<a href="${getArticleUrl(article)}" target="_blank" rel="noopener" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Vedi</a>`
+    : "";
   return `
     <article class="border-2 border-black p-4">
       <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
@@ -325,8 +296,9 @@ function articleRow(article) {
         </div>
         <div class="flex flex-wrap gap-2 md:justify-end">
           <a href="/admin-article-editor/?id=${encodeURIComponent(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</a>
-          <button data-article-action="toggle" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">${article.published ? "Sposta in bozze" : "Pubblica"}</button>
-          <button data-article-action="delete" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
+          ${viewLink}
+          <button data-article-action="toggle" data-id="${escapeHtml(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">${article.published ? "Sposta in bozze" : "Pubblica"}</button>
+          <button data-article-action="delete" data-id="${escapeHtml(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
         </div>
       </div>
     </article>
@@ -361,14 +333,18 @@ function renderFeaturedManager() {
 
   const orderHtml = featuredArticles.length
     ? featuredArticles.map((article, index) => `
-      <article draggable="true" data-drag-id="${article.id}" class="border-2 border-black bg-yellow-100 p-3 cursor-move">
+      <article draggable="true" data-drag-id="${escapeHtml(article.id)}" class="border-2 border-black bg-yellow-100 p-3 cursor-move">
         <div class="flex items-center justify-between gap-2">
-          <div>
+          <div class="min-w-0">
             <p class="text-xs uppercase font-bold text-accent">${escapeHtml(article.category)}</p>
             <h4 class="font-semibold">${escapeHtml(article.title)}</h4>
             <p class="text-xs mt-1 text-amber-700">★ In evidenza #${index + 1}${usingAutoFallback ? " (auto recenti)" : ""}</p>
           </div>
-          <button data-feature-action="remove" data-id="${article.id}" class="border-2 border-black px-2 py-1 text-[10px] font-bold uppercase bg-white">Rimuovi</button>
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" data-feature-action="move-up" data-id="${escapeHtml(article.id)}" class="border-2 border-black bg-white px-2 py-1 text-[10px] font-bold uppercase" aria-label="Sposta su"${index === 0 ? " disabled" : ""}>↑</button>
+            <button type="button" data-feature-action="move-down" data-id="${escapeHtml(article.id)}" class="border-2 border-black bg-white px-2 py-1 text-[10px] font-bold uppercase" aria-label="Sposta giu"${index === featuredArticles.length - 1 ? " disabled" : ""}>↓</button>
+            <button data-feature-action="remove" data-id="${escapeHtml(article.id)}" class="border-2 border-black bg-white px-2 py-1 text-[10px] font-bold uppercase">Rimuovi</button>
+          </div>
         </div>
       </article>
     `).join("")
@@ -379,12 +355,12 @@ function renderFeaturedManager() {
     return `
       <article class="border-2 border-black p-3 ${selected ? "bg-yellow-100" : "bg-white"}">
         <div class="flex items-center justify-between gap-2">
-          <div>
+          <div class="min-w-0">
             <p class="text-xs uppercase font-bold text-accent">${escapeHtml(article.category)}</p>
             <h4 class="font-semibold">${escapeHtml(article.title)}</h4>
             <p class="text-xs mt-1 ${selected ? "text-amber-700 font-semibold" : "text-slate-500"}">${selected ? "★ Già in evidenza" : "○ Non in evidenza"}</p>
           </div>
-          <button data-feature-action="${selected ? "remove" : "add"}" data-id="${article.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase ${selected ? "bg-white" : "bg-accent text-white"}">${selected ? "Rimuovi" : "Aggiungi"}</button>
+          <button data-feature-action="${selected ? "remove" : "add"}" data-id="${escapeHtml(article.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase ${selected ? "bg-white" : "bg-accent text-white"}">${selected ? "Rimuovi" : "Aggiungi"}</button>
         </div>
       </article>
     `;
@@ -393,7 +369,7 @@ function renderFeaturedManager() {
   featuredManagerList.innerHTML = `
     <div class="grid lg:grid-cols-2 gap-4">
       <section class="border-2 border-black p-4">
-        <h4 class="text-xs font-bold uppercase mb-2">Ordine in evidenza (drag & drop)</h4>
+        <h4 class="text-xs font-bold uppercase mb-2">Ordine in evidenza (drag &amp; drop)</h4>
         <p class="text-[11px] text-slate-600 mb-2">${usingAutoFallback ? "Nessuna evidenza manuale salvata: qui vedi il fallback automatico dei 3 articoli piu recenti." : "Stai gestendo l'ordine manuale degli articoli in evidenza."}</p>
         <div id="featuredOrderList" class="space-y-2">${orderHtml}</div>
       </section>
@@ -411,58 +387,118 @@ function resetCountdownForm() {
   document.getElementById("countdownEmoji").value = "";
   document.getElementById("countdownActive").checked = true;
   document.getElementById("countdownIsFeatured").checked = false;
-  document.getElementById("submitCountdownBtn").textContent = "Salva Countdown";
   renderCountdownSlugPreview();
 }
 
+function resetAgendaForm() {
+  agendaForm.reset();
+  document.getElementById("agendaEventId").value = "";
+  renderAgendaSlugPreview();
+}
+
+function openSlideover(kind, { title, meta, onSave, onCancel }) {
+  slideoverKind = kind;
+  countdownForm.classList.toggle("hidden", kind !== "countdown");
+  agendaForm.classList.toggle("hidden", kind !== "agenda");
+  slideoverTitle.textContent = title || "";
+  slideoverMeta.textContent = meta || "";
+  activeContext = { onSave, onCancel };
+
+  slideoverRoot.classList.remove("hidden");
+  document.body.classList.add("overflow-hidden");
+  requestAnimationFrame(() => {
+    slideoverPanel.classList.remove("translate-x-full");
+  });
+
+  const firstField = kind === "countdown"
+    ? document.getElementById("countdownTitle")
+    : document.getElementById("agendaTitle");
+  setTimeout(() => firstField?.focus(), 220);
+}
+
+function closeSlideover() {
+  slideoverPanel.classList.add("translate-x-full");
+  document.body.classList.remove("overflow-hidden");
+  setTimeout(() => {
+    slideoverRoot.classList.add("hidden");
+    countdownForm.classList.add("hidden");
+    agendaForm.classList.add("hidden");
+  }, 200);
+  slideoverKind = null;
+  activeContext = null;
+}
+
+function setSlideoverSaving(saving) {
+  isSlideoverSaving = saving;
+  slideoverSaveBtn.disabled = saving;
+  slideoverCancelBtn.disabled = saving;
+  slideoverCloseBtn.disabled = saving;
+  slideoverSaveBtn.textContent = saving ? "Salvataggio..." : "Salva";
+}
+
 function startNewCountdown() {
-  setContentSection("countdown");
   resetCountdownForm();
-  setEditContext({
-    type: "Countdown",
+  openSlideover("countdown", {
     title: "Nuovo countdown",
     meta: "ID: non assegnato | Stato: bozza locale",
     onSave: () => countdownForm.requestSubmit(),
     onCancel: () => {
       resetCountdownForm();
-      clearEditContext();
-    },
-    onBack: () => {
-      resetCountdownForm();
-      clearEditContext();
+      closeSlideover();
     }
   });
-  document.getElementById("countdownTitle").focus();
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function fillCountdownForm(item) {
-  setContentSection("countdown");
   document.getElementById("countdownId").value = item.id;
   document.getElementById("countdownTitle").value = item.title;
   document.getElementById("countdownEmoji").value = item.emoji || "";
   document.getElementById("countdownTargetAt").value = isoToDateTimeLocal(item.target_at);
   document.getElementById("countdownIsFeatured").checked = Boolean(item.is_featured);
   document.getElementById("countdownActive").checked = Boolean(item.active);
-  document.getElementById("submitCountdownBtn").textContent = "Aggiorna Countdown";
   renderCountdownSlugPreview();
 
-  setEditContext({
-    type: "Countdown",
+  openSlideover("countdown", {
     title: `${item.emoji ? `${item.emoji} ` : ""}${item.title}`,
     meta: `Slug: ${item.slug || "-"} | Stato: ${item.active ? "Online" : "Disattivo"}`,
     onSave: () => countdownForm.requestSubmit(),
     onCancel: () => {
       resetCountdownForm();
-      clearEditContext();
-    },
-    onBack: () => {
-      resetCountdownForm();
-      clearEditContext();
+      closeSlideover();
     }
   });
+}
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+function startNewEvent() {
+  resetAgendaForm();
+  openSlideover("agenda", {
+    title: "Nuovo evento",
+    meta: "ID: non assegnato",
+    onSave: () => agendaForm.requestSubmit(),
+    onCancel: () => {
+      resetAgendaForm();
+      closeSlideover();
+    }
+  });
+}
+
+function fillAgendaForm(item) {
+  document.getElementById("agendaEventId").value = item.id;
+  document.getElementById("agendaTitle").value = item.title;
+  document.getElementById("agendaCategory").value = item.category;
+  document.getElementById("agendaDate").value = normalizeAgendaDateInput(item.date);
+  document.getElementById("agendaDescription").value = item.description;
+  renderAgendaSlugPreview();
+
+  openSlideover("agenda", {
+    title: item.title,
+    meta: `ID: ${item.id} | Data: ${formatLocalDate(normalizeAgendaDateInput(item.date)) || "-"}`,
+    onSave: () => agendaForm.requestSubmit(),
+    onCancel: () => {
+      resetAgendaForm();
+      closeSlideover();
+    }
+  });
 }
 
 function renderAdminCountdowns() {
@@ -483,73 +519,17 @@ function renderAdminCountdowns() {
           <h4 class="text-lg font-semibold">${escapeHtml(item.emoji ? `${item.emoji} ${item.title}` : item.title)}</h4>
           <p class="text-sm mt-1">Data target: ${new Date(item.target_at).toLocaleString("it-IT", { dateStyle: "medium", timeStyle: "short" })}</p>
           <p class="text-xs mt-2">
-            ID: ${item.id} | Slug: ${item.slug || "-"} | Stato: ${item.active ? "Online" : "Disattivo"}
+            ID: ${escapeHtml(item.id)} | Slug: ${escapeHtml(item.slug || "-")} | Stato: ${item.active ? "Online" : "Disattivo"}
             ${item.is_featured ? " | In evidenza principale" : ""}
           </p>
         </div>
         <div class="flex flex-wrap gap-2 md:justify-end">
-          <button data-countdown-action="edit" data-id="${item.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</button>
-          <button data-countdown-action="delete" data-id="${item.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
+          <button data-countdown-action="edit" data-id="${escapeHtml(item.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</button>
+          <button data-countdown-action="delete" data-id="${escapeHtml(item.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
         </div>
       </div>
     </article>
   `).join("");
-}
-
-function resetAgendaForm() {
-  agendaForm.reset();
-  document.getElementById("agendaEventId").value = "";
-  document.getElementById("submitAgendaBtn").textContent = "Salva Evento";
-  renderAgendaSlugPreview();
-}
-
-function startNewEvent() {
-  setContentSection("agenda");
-  resetAgendaForm();
-  setEditContext({
-    type: "Evento agenda",
-    title: "Nuovo evento",
-    meta: "ID: non assegnato",
-    onSave: () => agendaForm.requestSubmit(),
-    onCancel: () => {
-      resetAgendaForm();
-      clearEditContext();
-    },
-    onBack: () => {
-      resetAgendaForm();
-      clearEditContext();
-    }
-  });
-  document.getElementById("agendaTitle").focus();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function fillAgendaForm(item) {
-  setContentSection("agenda");
-  document.getElementById("agendaEventId").value = item.id;
-  document.getElementById("agendaTitle").value = item.title;
-  document.getElementById("agendaCategory").value = item.category;
-  document.getElementById("agendaDate").value = normalizeAgendaDateInput(item.date);
-  document.getElementById("agendaDescription").value = item.description;
-  document.getElementById("submitAgendaBtn").textContent = "Aggiorna Evento";
-  renderAgendaSlugPreview();
-
-  setEditContext({
-    type: "Evento agenda",
-    title: item.title,
-    meta: `ID: ${item.id} | Data: ${formatLocalDate(normalizeAgendaDateInput(item.date)) || "-"}`,
-    onSave: () => agendaForm.requestSubmit(),
-    onCancel: () => {
-      resetAgendaForm();
-      clearEditContext();
-    },
-    onBack: () => {
-      resetAgendaForm();
-      clearEditContext();
-    }
-  });
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function renderAdminAgendaEvents() {
@@ -565,15 +545,85 @@ function renderAdminAgendaEvents() {
           <p class="text-xs uppercase font-bold text-accent">${escapeHtml(item.category)}</p>
           <h4 class="text-lg font-semibold">${escapeHtml(item.title)}</h4>
           <p class="text-sm mt-1">${escapeHtml(item.description)}</p>
-          <p class="text-xs mt-2">ID: ${item.id} | Data: ${formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida"}</p>
+          <p class="text-xs mt-2">ID: ${escapeHtml(item.id)} | Data: ${formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida"}</p>
         </div>
         <div class="flex flex-wrap gap-2 md:justify-end">
-          <button data-agenda-action="edit" data-id="${item.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</button>
-          <button data-agenda-action="delete" data-id="${item.id}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
+          <button data-agenda-action="edit" data-id="${escapeHtml(item.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase">Modifica</button>
+          <button data-agenda-action="delete" data-id="${escapeHtml(item.id)}" class="border-2 border-black px-3 py-1 text-xs font-bold uppercase text-red-700">Elimina</button>
         </div>
       </div>
     </article>
   `).join("");
+}
+
+function renderArticleSubView() {
+  const showEdit = currentArticleSubView === "articles";
+  articlesView.classList.toggle("hidden", !showEdit);
+  featuredView.classList.toggle("hidden", showEdit);
+  openArticlesViewBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showEdit ? "bg-black text-white" : "bg-white"}`;
+  openFeaturedViewBtn.className = `border-2 border-black px-4 py-2 text-xs font-bold uppercase ${showEdit ? "bg-white" : "bg-black text-white"}`;
+  if (showEdit) {
+    renderAdminArticles();
+  } else {
+    renderFeaturedManager();
+  }
+}
+
+function parseHashRoute() {
+  const raw = window.location.hash.replace(/^#\/?/, "");
+  const [view = "dashboard", sub = ""] = raw.split("/").filter(Boolean);
+  const known = NAV_ITEMS.some((item) => item.id === view);
+  return { view: known ? view : "dashboard", sub };
+}
+
+function renderNavState() {
+  document.querySelectorAll("#adminNav [data-nav]").forEach((btn) => {
+    const active = btn.dataset.nav === currentView;
+    btn.className = `flex items-center gap-2 shrink-0 border-2 border-black px-3 py-2 text-xs font-bold uppercase ${active ? "bg-black text-white" : "bg-white"}`;
+  });
+}
+
+function renderCurrentView() {
+  const views = ["dashboard", "articles", "countdown", "agenda", "settings"];
+  views.forEach((view) => {
+    document.getElementById(`view-${view}`)?.classList.toggle("hidden", view !== currentView);
+  });
+  renderNavState();
+  renderStats();
+
+  if (currentView === "articles") {
+    renderArticleSubView();
+  }
+  if (currentView === "countdown") {
+    renderAdminCountdowns();
+  }
+  if (currentView === "agenda") {
+    renderAdminAgendaEvents();
+  }
+  if (currentView === "settings") {
+    renderMaintenanceUi();
+  }
+}
+
+function navigateToView(view, sub = "") {
+  const hash = sub ? `#/${view}/${sub}` : `#/${view}`;
+  if (window.location.hash === hash) {
+    applyHashRoute();
+  } else {
+    window.location.hash = hash;
+  }
+}
+
+function applyHashRoute() {
+  if (!adminPanel || adminPanel.classList.contains("hidden")) return;
+  const { view, sub } = parseHashRoute();
+  currentView = view;
+  if (view === "articles" && sub === "evidenza") {
+    currentArticleSubView = "featured";
+  } else if (view === "articles") {
+    currentArticleSubView = "articles";
+  }
+  renderCurrentView();
 }
 
 async function handleAuthUi() {
@@ -587,9 +637,7 @@ async function handleAuthUi() {
   if (!isAuth) {
     setAdminStatus("");
     setLoginError("");
-    setContentSection("articles");
-    setArticleSubView("articles");
-    clearEditContext();
+    closeSlideover();
     return false;
   }
 
@@ -604,14 +652,13 @@ async function handleAuthUi() {
     }
 
     await loadData();
-    renderAdminArticles();
-    renderFeaturedManager();
-    renderAdminCountdowns();
-    renderAdminAgendaEvents();
-    renderMaintenanceUi();
-    renderCountdownSlugPreview();
-    renderAgendaSlugPreview();
     setAdminStatus("");
+    applyHashRoute();
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (settingsAccountEmail) {
+      settingsAccountEmail.textContent = userData?.user?.email || "admin";
+    }
   } catch (err) {
     console.error(err);
     setAdminStatus("Login riuscito, ma errore nel caricamento dati admin (controlla schema/policy Supabase).");
@@ -653,15 +700,29 @@ loginForm.addEventListener("submit", async (event) => {
 maintenanceModeSaveBtn?.addEventListener("click", async () => {
   if (!(maintenanceModeInput instanceof HTMLInputElement)) return;
 
+  const turningOn = maintenanceModeInput.checked && !siteSettings.maintenanceMode;
+  if (turningOn) {
+    const confirmed = await confirmDialog({
+      title: "Attivare la manutenzione?",
+      message: "Il sito pubblico verra bloccato e reindirizzato a /manutenzione. L'area admin resta accessibile.",
+      confirmLabel: "Attiva manutenzione",
+      danger: true,
+      typedConfirmation: "ATTIVA"
+    });
+    if (!confirmed) {
+      maintenanceModeInput.checked = Boolean(siteSettings.maintenanceMode);
+      return;
+    }
+  }
+
   maintenanceModeSaveBtn.disabled = true;
-  const originalLabel = maintenanceModeSaveBtn.textContent;
   maintenanceModeSaveBtn.textContent = "Salvataggio...";
 
   try {
     siteSettings = await saveSiteSettings({ maintenanceMode: maintenanceModeInput.checked });
     featuredIds = [...siteSettings.featuredArticleIds];
     renderMaintenanceUi();
-    setAdminStatus(
+    showToast(
       siteSettings.maintenanceMode
         ? "Modalita manutenzione attivata. Il sito pubblico verra bloccato."
         : "Modalita manutenzione disattivata. Il sito pubblico torna accessibile."
@@ -669,87 +730,127 @@ maintenanceModeSaveBtn?.addEventListener("click", async () => {
   } catch (error) {
     console.error(error);
     maintenanceModeInput.checked = Boolean(siteSettings.maintenanceMode);
-    alert("Impossibile aggiornare la modalita manutenzione.");
+    showToast("Impossibile aggiornare la modalita manutenzione.", "error");
   } finally {
     maintenanceModeSaveBtn.disabled = false;
-    maintenanceModeSaveBtn.textContent = originalLabel;
+    maintenanceModeSaveBtn.textContent = "Salva stato manutenzione";
   }
 });
 
-logoutBtn?.addEventListener("click", async () => {
+let isNormalizingPhotos = false;
+
+normalizePhotosBtn?.addEventListener("click", async () => {
+  if (isNormalizingPhotos) return;
+
+  const confirmed = await confirmDialog({
+    title: "Normalizzare tutte le foto?",
+    message: "Le foto articoli esistenti verranno riscaricate, convertite in SDR e ridimensionate al massimo in Full HD (1920x1080). L'operazione puo richiedere alcuni minuti.",
+    confirmLabel: "Normalizza foto",
+    danger: true,
+    typedConfirmation: "NORMALIZZA"
+  });
+  if (!confirmed) return;
+
+  isNormalizingPhotos = true;
+  normalizePhotosBtn.disabled = true;
+  normalizePhotosProgress.classList.remove("hidden");
+  normalizePhotosProgress.textContent = "Normalizzazione foto esistenti avviata...";
+
+  try {
+    const result = await normalizeAllArticleImages({
+      onProgress: ({ done, failed, total }) => {
+        normalizePhotosProgress.textContent = `Normalizzazione foto esistenti: ${done}/${total} completate${failed ? `, ${failed} con errore` : ""}`;
+      }
+    });
+
+    if (result.failed) {
+      showToast(`Normalizzazione completata con errori: ${result.done} aggiornate, ${result.failed} non aggiornate.`, "warning");
+    } else if (result.done) {
+      showToast(`Normalizzazione completata: ${result.done} immagini aggiornate (SDR + max Full HD).`);
+    } else {
+      showToast("Nessuna foto da normalizzare.", "warning");
+    }
+  } catch (error) {
+    console.error(error);
+    showToast(error?.message || "Errore durante la normalizzazione delle immagini esistenti.", "error");
+  } finally {
+    isNormalizingPhotos = false;
+    normalizePhotosBtn.disabled = false;
+  }
+});
+
+async function handleLogout() {
   await supabase.auth.signOut();
   await handleAuthUi();
+}
+
+logoutBtn?.addEventListener("click", handleLogout);
+logoutBtnDesktop?.addEventListener("click", handleLogout);
+
+document.querySelectorAll("#adminNav [data-nav]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    navigateToView(btn.dataset.nav);
+  });
 });
 
-openContentArticlesBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setContentSection("articles");
-  setArticleSubView("articles");
+newArticleBtn?.addEventListener("click", () => {
+  window.location.href = "/admin-article-editor/?mode=new";
 });
 
-openContentCountdownBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setContentSection("countdown");
-  renderAdminCountdowns();
+openArticlesViewBtn?.addEventListener("click", () => {
+  navigateToView("articles", "lista");
 });
 
-openContentAgendaBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setContentSection("agenda");
-  renderAdminAgendaEvents();
+openFeaturedViewBtn?.addEventListener("click", () => {
+  navigateToView("articles", "evidenza");
 });
 
-openArticlesViewBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setArticleSubView("articles");
+document.getElementById("quickNewArticleBtn")?.addEventListener("click", () => {
+  window.location.href = "/admin-article-editor/?mode=new";
 });
 
-openFeaturedViewBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  setArticleSubView("featured");
-  renderFeaturedManager();
-  clearEditContext();
-});
+document.getElementById("quickNewCountdownBtn")?.addEventListener("click", startNewCountdown);
+document.getElementById("quickNewEventBtn")?.addEventListener("click", startNewEvent);
+document.getElementById("quickFeaturedBtn")?.addEventListener("click", () => navigateToView("articles", "evidenza"));
+document.getElementById("quickSettingsBtn")?.addEventListener("click", () => navigateToView("settings"));
 
-newItemBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  if (currentSection === "articles") {
-    window.location.href = "/admin-article-editor/?mode=new";
-    return;
-  }
-  if (currentSection === "countdown") {
-    startNewCountdown();
-    return;
-  }
-  startNewEvent();
-});
-
-newCountdownBtn?.addEventListener("click", (event) => {
-  event.preventDefault();
-  startNewCountdown();
-});
+newCountdownBtn?.addEventListener("click", startNewCountdown);
+newAgendaBtn?.addEventListener("click", startNewEvent);
 
 document.getElementById("countdownTitle")?.addEventListener("input", renderCountdownSlugPreview);
 document.getElementById("countdownId")?.addEventListener("change", renderCountdownSlugPreview);
 document.getElementById("agendaTitle")?.addEventListener("input", renderAgendaSlugPreview);
 document.getElementById("agendaEventId")?.addEventListener("change", renderAgendaSlugPreview);
 
-editContextSaveBtn?.addEventListener("click", () => {
+slideoverSaveBtn?.addEventListener("click", () => {
   if (activeContext?.onSave) activeContext.onSave();
 });
 
-editContextCancelBtn?.addEventListener("click", () => {
+slideoverCancelBtn?.addEventListener("click", () => {
   if (activeContext?.onCancel) activeContext.onCancel();
 });
 
-editContextBackBtn?.addEventListener("click", () => {
-  if (activeContext?.onBack) activeContext.onBack();
+slideoverCloseBtn?.addEventListener("click", () => {
+  if (activeContext?.onCancel) activeContext.onCancel();
+});
+
+slideoverBackdrop?.addEventListener("click", () => {
+  if (activeContext?.onCancel) activeContext.onCancel();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && slideoverKind && activeContext?.onCancel) {
+    activeContext.onCancel();
+  }
 });
 
 countdownForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (isSlideoverSaving) return;
 
   try {
+    setSlideoverSaving(true);
+
     const id = document.getElementById("countdownId").value || crypto.randomUUID();
     const now = new Date().toISOString();
     const title = document.getElementById("countdownTitle").value.trim();
@@ -787,20 +888,26 @@ countdownForm.addEventListener("submit", async (event) => {
     if (error) throw error;
 
     await loadData();
+    renderStats();
     renderAdminCountdowns();
     resetCountdownForm();
-    clearEditContext();
-    setAdminStatus("Countdown salvato correttamente.");
+    closeSlideover();
+    showToast("Countdown salvato correttamente.");
   } catch (err) {
     console.error(err);
-    alert(err?.message || "Errore durante il salvataggio del countdown.");
+    showToast(err?.message || "Errore durante il salvataggio del countdown.", "error");
+  } finally {
+    setSlideoverSaving(false);
   }
 });
 
 agendaForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (isSlideoverSaving) return;
 
   try {
+    setSlideoverSaving(true);
+
     const id = document.getElementById("agendaEventId").value || crypto.randomUUID();
     const now = new Date().toISOString();
 
@@ -819,24 +926,18 @@ agendaForm.addEventListener("submit", async (event) => {
     if (error) throw error;
 
     await loadData();
+    renderStats();
     renderAdminAgendaEvents();
     resetAgendaForm();
-    clearEditContext();
-    setAdminStatus("Evento agenda salvato correttamente.");
+    closeSlideover();
+    showToast("Evento agenda salvato correttamente.");
   } catch (err) {
     console.error(err);
-    alert("Errore durante il salvataggio dell'evento.");
+    showToast("Errore durante il salvataggio dell'evento.", "error");
   }
 });
 
-adminArticlesOnline.addEventListener("click", async (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLElement)) return;
-
-  const action = target.dataset.articleAction;
-  const id = target.dataset.id;
-  if (!action || !id) return;
-
+async function handleArticleAction(action, id) {
   const article = articles.find((item) => item.id === id);
   if (!article) return;
 
@@ -848,61 +949,49 @@ adminArticlesOnline.addEventListener("click", async (event) => {
         .eq("id", id);
       if (error) throw error;
       await loadData();
-      renderAdminArticles();
-      renderFeaturedManager();
+      renderStats();
+      renderArticleSubView();
+      showToast(article.published ? "Articolo spostato nelle bozze." : "Articolo pubblicato.");
       return;
     }
 
     if (action === "delete") {
-      if (!confirm("Vuoi eliminare definitivamente questo articolo?")) return;
+      const confirmed = await confirmDialog({
+        title: "Eliminare l'articolo?",
+        message: `Vuoi eliminare definitivamente "${article.title}"? L'operazione non e reversibile.`,
+        confirmLabel: "Elimina",
+        danger: true
+      });
+      if (!confirmed) return;
       const { error } = await supabase.from("articles").delete().eq("id", id);
       if (error) throw error;
       await loadData();
-      renderAdminArticles();
-      renderFeaturedManager();
+      renderStats();
+      renderArticleSubView();
+      showToast("Articolo eliminato.");
     }
   } catch (err) {
     console.error(err);
-    alert("Errore operazione articolo.");
+    showToast("Errore operazione articolo.", "error");
   }
-});
+}
 
-adminArticlesDrafts.addEventListener("click", async (event) => {
+adminArticlesOnline.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
-
   const action = target.dataset.articleAction;
   const id = target.dataset.id;
   if (!action || !id) return;
+  handleArticleAction(action, id);
+});
 
-  const article = articles.find((item) => item.id === id);
-  if (!article) return;
-
-  try {
-    if (action === "toggle") {
-      const { error } = await supabase
-        .from("articles")
-        .update({ published: !article.published, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-      await loadData();
-      renderAdminArticles();
-      renderFeaturedManager();
-      return;
-    }
-
-    if (action === "delete") {
-      if (!confirm("Vuoi eliminare definitivamente questo articolo?")) return;
-      const { error } = await supabase.from("articles").delete().eq("id", id);
-      if (error) throw error;
-      await loadData();
-      renderAdminArticles();
-      renderFeaturedManager();
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Errore operazione articolo.");
-  }
+adminArticlesDrafts.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  const action = target.dataset.articleAction;
+  const id = target.dataset.id;
+  if (!action || !id) return;
+  handleArticleAction(action, id);
 });
 
 adminCountdowns.addEventListener("click", async (event) => {
@@ -923,16 +1012,23 @@ adminCountdowns.addEventListener("click", async (event) => {
     }
 
     if (action === "delete") {
-      if (!confirm("Vuoi eliminare definitivamente questo countdown?")) return;
+      const confirmed = await confirmDialog({
+        title: "Eliminare il countdown?",
+        message: `Vuoi eliminare definitivamente "${item.title}"? L'operazione non e reversibile.`,
+        confirmLabel: "Elimina",
+        danger: true
+      });
+      if (!confirmed) return;
       const { error } = await supabase.from("countdowns").delete().eq("id", id);
       if (error) throw error;
       await loadData();
+      renderStats();
       renderAdminCountdowns();
-      clearEditContext();
+      showToast("Countdown eliminato.");
     }
   } catch (err) {
     console.error(err);
-    alert("Errore operazione countdown.");
+    showToast("Errore operazione countdown.", "error");
   }
 });
 
@@ -954,16 +1050,23 @@ adminAgendaEvents.addEventListener("click", async (event) => {
     }
 
     if (action === "delete") {
-      if (!confirm("Vuoi eliminare definitivamente questo evento?")) return;
+      const confirmed = await confirmDialog({
+        title: "Eliminare l'evento?",
+        message: `Vuoi eliminare definitivamente "${item.title}"? L'operazione non e reversibile.`,
+        confirmLabel: "Elimina",
+        danger: true
+      });
+      if (!confirmed) return;
       const { error } = await supabase.from("agenda_events").delete().eq("id", id);
       if (error) throw error;
       await loadData();
+      renderStats();
       renderAdminAgendaEvents();
-      clearEditContext();
+      showToast("Evento eliminato.");
     }
   } catch (err) {
     console.error(err);
-    alert("Errore operazione agenda.");
+    showToast("Errore operazione agenda.", "error");
   }
 });
 
@@ -978,6 +1081,24 @@ featuredManagerList.addEventListener("click", async (event) => {
   const isPublished = articles.some((item) => item.id === id && item.published);
   if (!isPublished) return;
 
+  if (action === "move-up" || action === "move-down") {
+    const working = getEffectiveFeaturedIds();
+    const index = working.indexOf(id);
+    const targetIndex = action === "move-up" ? index - 1 : index + 1;
+    if (index < 0 || targetIndex < 0 || targetIndex >= working.length) return;
+    [working[index], working[targetIndex]] = [working[targetIndex], working[index]];
+    featuredIds = working;
+
+    try {
+      await upsertFeaturedIds();
+      renderFeaturedManager();
+    } catch (err) {
+      console.error(err);
+      showToast("Errore riordino evidenza.", "error");
+    }
+    return;
+  }
+
   const working = getEffectiveFeaturedIds();
   const index = working.indexOf(id);
   if (action === "add" && index === -1) working.push(id);
@@ -989,7 +1110,7 @@ featuredManagerList.addEventListener("click", async (event) => {
     renderFeaturedManager();
   } catch (err) {
     console.error(err);
-    alert("Errore salvataggio evidenza.");
+    showToast("Errore salvataggio evidenza.", "error");
   }
 });
 
@@ -1046,7 +1167,7 @@ featuredManagerList.addEventListener("drop", async (event) => {
     renderFeaturedManager();
   } catch (err) {
     console.error(err);
-    alert("Errore riordino evidenza.");
+    showToast("Errore riordino evidenza.", "error");
   }
 });
 
@@ -1054,6 +1175,8 @@ featuredManagerList.addEventListener("dragend", () => {
   draggedFeaturedId = null;
   featuredManagerList.querySelectorAll("[data-drag-id]").forEach((item) => item.classList.remove("opacity-60", "ring-2", "ring-accent"));
 });
+
+window.addEventListener("hashchange", applyHashRoute);
 
 supabase.auth.onAuthStateChange(() => {
   handleAuthUi().catch((err) => {
