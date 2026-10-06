@@ -24,30 +24,14 @@
   <script src="/assets/js/enforce-clean-url.js?v=20260311a"></script>
   <script>document.documentElement.dataset.maintenanceGuard = "pending";</script>
   <script type="module" src="/assets/js/maintenance-guard.js?v=20260312a"></script>
-  <style>html[data-maintenance-guard="pending"] body { opacity: 0; }</style>
-  <link rel="stylesheet" href="/assets/css/public-background.css?v=20260303a" />
+  <link rel="stylesheet" href="/assets/css/site.css?v=20261005a" />
   <link rel="stylesheet" href="/assets/css/cookie-consent.css?v=20260311a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { accent: "#0c7ff2", paper: "#f4f3ee", ink: "#101010" },
-          fontFamily: { display: ["Bebas Neue", "sans-serif"], body: ["IBM Plex Sans", "sans-serif"] },
-          boxShadow: { brutal: "4px 4px 0 0 #000" }
-        }
-      }
-    };
-  </script>
-  <style>
-    body { font-family: "IBM Plex Sans", sans-serif; background: #f4f3ee; }
-    .headline { font-family: "Bebas Neue", sans-serif; letter-spacing: .04em; }
-    .detail-shell { width: min(56rem, calc(100vw - 2rem)); margin-inline: auto; }
-  </style>
+  <script src="/assets/js/tailwind-config.js?v=20261005a"></script>
 </head>
 <body class="text-ink public-grid-bg" data-page-title="Articolo" data-article-slug="torniamo-fuori-ecco-come-funzionera-la-nuova-ricreazione">
   <script src="/assets/js/cookie-consent-bootstrap.js?v=20260311a"></script>

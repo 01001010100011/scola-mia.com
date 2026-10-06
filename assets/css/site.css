@@ -1,0 +1,183 @@
+/* ------------------------------------------------------------------
+   scola-mia.com — layer condiviso di token e stili di base.
+   I token derivano da design-kit-scola-mia/tokens/design-tokens.json.
+   ------------------------------------------------------------------ */
+
+:root {
+  --sm-accent: #0c7ff2;
+  --sm-accent-dark: #128c7e;
+  --sm-paper: #f4f3ee;
+  --sm-ink: #101010;
+  --sm-marker: #ffe66d;
+  --sm-muted: #475569;
+  --sm-white: #ffffff;
+  --sm-grid-line: rgba(0, 0, 0, 0.08);
+  --sm-overlay: rgba(0, 0, 0, 0.5);
+  --sm-whatsapp: #25d366;
+
+  --sm-font-display: "Bebas Neue", sans-serif;
+  --sm-font-body: "IBM Plex Sans", sans-serif;
+  --sm-font-icon: "Material Symbols Outlined";
+
+  --sm-tracking-headline: 0.04em;
+  --sm-tracking-caps: 0.08em;
+
+  --sm-border-2: 2px solid #000;
+  --sm-border-3: 3px solid #000;
+  --sm-border-4: 4px solid #000;
+
+  --sm-shadow-brutal: 4px 4px 0 0 #000;
+  --sm-shadow-brutal-hover: 6px 6px 0 0 #000;
+
+  --sm-container: 80rem;
+  --sm-detail-container: 56rem;
+  --sm-grid-size: 28px;
+
+  --sm-duration-fast: 200ms;
+  --sm-duration-normal: 500ms;
+  --sm-ease: ease;
+  --sm-hover-shift: 2px;
+}
+
+/* Il guard nasconde il corpo finche maintenance-guard.js non ha deciso. */
+html[data-maintenance-guard="pending"] body {
+  opacity: 0;
+}
+
+body {
+  font-family: var(--sm-font-body);
+  color: var(--sm-ink);
+  background-color: var(--sm-paper);
+}
+
+.headline {
+  font-family: var(--sm-font-display);
+  letter-spacing: var(--sm-tracking-headline);
+}
+
+/* !important ereditato da public-background.css: serve a vincere gli
+   stili iniettati a runtime dal Play CDN di Tailwind. */
+body.public-grid-bg {
+  background-color: var(--sm-paper) !important;
+  background-image:
+    linear-gradient(var(--sm-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sm-grid-line) 1px, transparent 1px) !important;
+  background-size: var(--sm-grid-size) var(--sm-grid-size) !important;
+}
+
+.detail-shell {
+  width: min(var(--sm-detail-container), calc(100vw - 2rem));
+  margin-inline: auto;
+}
+
+.lift:hover {
+  transform: translate(calc(var(--sm-hover-shift) * -1), calc(var(--sm-hover-shift) * -1));
+  box-shadow: var(--sm-shadow-brutal-hover);
+}
+
+/* ------------------------------------------------------------------
+   Componenti del design system (design-kit-scola-mia).
+   ------------------------------------------------------------------ */
+
+.sm-container {
+  width: min(100% - 2rem, var(--sm-container));
+  margin-inline: auto;
+}
+
+.sm-headline {
+  font-family: var(--sm-font-display);
+  letter-spacing: var(--sm-tracking-headline);
+  line-height: 0.9;
+}
+
+.sm-section-title {
+  font-family: var(--sm-font-display);
+  letter-spacing: var(--sm-tracking-headline);
+  font-size: clamp(2rem, 6vw, 3.2rem);
+}
+
+.sm-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--sm-tracking-caps);
+  color: var(--sm-accent);
+}
+
+.sm-card {
+  border: var(--sm-border-2);
+  background: var(--sm-white);
+  box-shadow: var(--sm-shadow-brutal);
+}
+
+.sm-card--paper {
+  background: var(--sm-paper);
+}
+
+.sm-card--thick {
+  border: var(--sm-border-4);
+}
+
+.sm-btn {
+  border: var(--sm-border-2);
+  box-shadow: var(--sm-shadow-brutal);
+  font-family: var(--sm-font-body);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--sm-tracking-headline);
+  transition: transform var(--sm-duration-fast) var(--sm-ease),
+    box-shadow var(--sm-duration-fast) var(--sm-ease);
+}
+
+.sm-btn:hover {
+  transform: translate(calc(var(--sm-hover-shift) * -1), calc(var(--sm-hover-shift) * -1));
+  box-shadow: var(--sm-shadow-brutal-hover);
+}
+
+.sm-btn--accent {
+  background: var(--sm-accent);
+  color: var(--sm-white);
+}
+
+.sm-btn--neutral {
+  background: var(--sm-white);
+  color: var(--sm-ink);
+}
+
+.sm-field {
+  border: var(--sm-border-2);
+  background: var(--sm-white);
+  font-family: var(--sm-font-body);
+}
+
+.sm-icon {
+  font-family: var(--sm-font-icon);
+}
+
+@media (min-width: 768px) {
+  .sm-two-cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sm-three-cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lift,
+  .sm-btn {
+    transition: none;
+  }
+
+  .lift:hover,
+  .sm-btn:hover {
+    transform: none;
+  }
+}
