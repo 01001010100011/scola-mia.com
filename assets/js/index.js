@@ -1,10 +1,10 @@
-import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishedArticles } from "./public-api.js?v=20260224e";
-import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20261005a";
-import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20261005a";
-import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
-import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260303c";
-import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
-import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
+import { getAgendaEvents, getCountdownEvents, getFeaturedArticleIds, getPublishedArticles } from "./public-api.js?v=20261006a";
+import { FEATURED_COUNTDOWN_SLUG, FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20261006a";
+import { formatCountdown, formatTargetDate, formatTargetDateTime, isMaturitaCountdown } from "./countdown-core.js?v=20261006a";
+import { escapeHtml, formatLocalDate, shortDate } from "./supabase-client.js?v=20261006a";
+import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20261006a";
+import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20261006a";
+import { buildCountdownUrl } from "./countdown-url.js?v=20261006a";
 
 const grid = document.getElementById("articlesGrid");
 const featured = document.getElementById("featuredArticles");
@@ -16,28 +16,6 @@ const PRESENTATION_ARTICLE_ID = "9d056b37-cacf-4c49-879e-d312fb4ef31f";
 
 let homeCountdownEvents = [];
 let homeCountdownTicker = null;
-
-function isMaturitaCountdownLocal(event) {
-  const slug = String(event?.slug || "").trim().toLowerCase();
-  return slug.startsWith("maturita-");
-}
-
-function formatTargetDateTimeLocal(targetAt) {
-  const date = new Date(targetAt);
-  if (Number.isNaN(date.getTime())) return formatTargetDate(targetAt);
-  const dateLabel = formatTargetDate(targetAt);
-  const timeLabel = date.toLocaleTimeString("it-IT", {
-    timeZone: "Europe/Rome",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-  return `${dateLabel} · ${timeLabel}`;
-}
-
-function shortDate(value) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "data non disponibile" : date.toLocaleDateString("it-IT");
-}
 
 function articleCard(article, articleSlugMap) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);
@@ -93,7 +71,7 @@ function sortByTargetDate(events) {
 }
 
 function countdownHomeFeaturedCard(event) {
-  const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
+  const dateLabel = isMaturitaCountdown(event) ? formatTargetDateTime(event.target_at) : formatTargetDate(event.target_at);
   const slug = escapeHtml(event.slug);
   return `
     <a href="${escapeHtml(buildCountdownUrl(event))}" class="block border-4 border-black bg-black text-white p-6 md:p-8 shadow-brutal lift transition-all h-full">
@@ -107,7 +85,7 @@ function countdownHomeFeaturedCard(event) {
 }
 
 function countdownHomeCard(event) {
-  const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
+  const dateLabel = isMaturitaCountdown(event) ? formatTargetDateTime(event.target_at) : formatTargetDate(event.target_at);
   const slug = escapeHtml(event.slug);
   return `
     <a href="${escapeHtml(buildCountdownUrl(event))}" class="block border-2 border-black bg-white p-4 shadow-brutal lift transition-all">

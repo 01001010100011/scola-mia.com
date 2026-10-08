@@ -1,16 +1,11 @@
-import { getPublishedArticles } from "./public-api.js?v=20260224e";
-import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
-import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260303c";
+import { getPublishedArticles } from "./public-api.js?v=20261006a";
+import { escapeHtml, formatLocalDate, shortDate } from "./supabase-client.js?v=20261006a";
+import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20261006a";
 
 const searchInput = document.getElementById("archiveSearchInput");
 const allEl = document.getElementById("allArticles");
 let publishedArticles = [];
 let articleSlugMap = new Map();
-
-function shortDate(value) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "data non disponibile" : date.toLocaleDateString("it-IT");
-}
 
 function card(article) {
   const publishedLabel = formatLocalDate(article.created_at || article.updated_at);

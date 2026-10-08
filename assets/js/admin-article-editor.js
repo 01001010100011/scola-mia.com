@@ -1,6 +1,6 @@
-import { escapeHtml, supabase, toSlugSafeName } from "./supabase-client.js?v=20260224e";
-import { markdownToHtml } from "./markdown.js?v=20261005a";
-import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20260303c";
+import { escapeHtml, supabase, toSlugSafeName } from "./supabase-client.js?v=20261006a";
+import { markdownToHtml } from "./markdown.js?v=20261006a";
+import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20261006a";
 import { normalizeImageFile } from "./admin-photo-tools.js?v=20261006a";
 import { ensureCurrentUserIsAdmin } from "./admin-auth.js?v=20261006a";
 import { showToast } from "./admin-ui.js?v=20261006a";

@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-client.js?v=20260224e";
+import { supabase } from "./supabase-client.js?v=20261006a";
 
 function isMissingMaintenanceColumn(error) {
   return ["42703", "PGRST204"].includes(String(error?.code || ""));

@@ -1,4 +1,4 @@
-import { supabase, toSlugSafeName } from "./supabase-client.js?v=20260224e";
+import { supabase, toSlugSafeName } from "./supabase-client.js?v=20261006a";
 
 const BUCKET = "article-media";
 const MAX_IMAGE_WIDTH = 1920;

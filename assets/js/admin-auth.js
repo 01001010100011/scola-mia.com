@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-client.js?v=20260224e";
+import { supabase } from "./supabase-client.js?v=20261006a";
 
 export async function ensureCurrentUserIsAdmin() {
   const { data: authData, error: authError } = await supabase.auth.getUser();

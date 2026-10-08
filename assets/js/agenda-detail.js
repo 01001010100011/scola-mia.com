@@ -1,6 +1,6 @@
-import { getAgendaEventById, getAgendaEvents } from "./public-api.js?v=20260224e";
-import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
-import { buildAgendaSlugMap, getAgendaSlug } from "./agenda-url.js?v=20260303a";
+import { getAgendaEventById, getAgendaEvents } from "./public-api.js?v=20261006a";
+import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20261006a";
+import { buildAgendaSlugMap, getAgendaSlug } from "./agenda-url.js?v=20261006a";
 
 const container = document.getElementById("agendaEventContainer");
 

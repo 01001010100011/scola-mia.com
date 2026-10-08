@@ -1,5 +1,5 @@
 const TARGET_ARTICLE_TITLE = "Nuova circolare sulla ricreazione: cosa cambia davvero";
-const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20260306d";
+const DATA_URL = "/assets/data/turni-ricreazione-completo.json?v=20261006a";
 const BRAND_LOGO_URL = "/assets/social/site-logo-512.png";
 const SELECTED_CLASS_STORAGE_KEY = "scola_mia_recreation_selected_class";
 

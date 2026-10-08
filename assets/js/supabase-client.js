@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=20260224e";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase-config.js?v=20261006a";
 
 const missingConfig =
   !SUPABASE_URL ||
@@ -26,6 +26,11 @@ export function formatLocalDate(value) {
     month: "long",
     year: "numeric"
   });
+}
+
+export function shortDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "data non disponibile" : date.toLocaleDateString("it-IT");
 }
 
 export function escapeHtml(value) {

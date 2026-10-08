@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-client.js?v=20260224e";
+import { supabase } from "./supabase-client.js?v=20261006a";
 
 export const CONTACTS = [
   { label: "Instagram", value: "@scolamia", href: "https://www.instagram.com/scolamia/" },

@@ -65,6 +65,11 @@ export function getRemainingTotalsFromMs(diffMs) {
   return getTotalsFromDiffMs(diffMs);
 }
 
+export function isMaturitaCountdown(event) {
+  const slug = String(event?.slug || "").trim().toLowerCase();
+  return slug.startsWith("maturita-");
+}
+
 export function formatTargetDate(targetAt) {
   const date = toDate(targetAt);
   if (!date) return "";

@@ -1,14 +1,14 @@
-import { countdownDateTokens, getCountdownEvents, queryMatches } from "./public-api.js?v=20260224e";
+import { countdownDateTokens, getCountdownEvents, queryMatches } from "./public-api.js?v=20261006a";
 import {
   FEATURED_COUNTDOWN_SLUG,
   FALLBACK_COUNTDOWN_EVENTS,
   countdownTitleWithEmoji,
   onlyFutureEvents,
   sortCountdownEvents
-} from "./countdown-data.js?v=20261005a";
-import { formatCountdown, formatTargetDate } from "./countdown-core.js?v=20261005a";
-import { escapeHtml } from "./supabase-client.js?v=20260224e";
-import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
+} from "./countdown-data.js?v=20261006a";
+import { formatCountdown, formatTargetDate, formatTargetDateTime, isMaturitaCountdown } from "./countdown-core.js?v=20261006a";
+import { escapeHtml } from "./supabase-client.js?v=20261006a";
+import { buildCountdownUrl } from "./countdown-url.js?v=20261006a";
 
 const featuredEl = document.getElementById("featuredCountdown");
 const listEl = document.getElementById("countdownList");
@@ -19,23 +19,6 @@ let allEvents = [];
 let visibleEvents = [];
 let activeQuery = "";
 let timer = null;
-
-function isMaturitaCountdownLocal(event) {
-  const slug = String(event?.slug || "").trim().toLowerCase();
-  return slug.startsWith("maturita-");
-}
-
-function formatTargetDateTimeLocal(targetAt) {
-  const date = new Date(targetAt);
-  if (Number.isNaN(date.getTime())) return formatTargetDate(targetAt);
-  const dateLabel = formatTargetDate(targetAt);
-  const timeLabel = date.toLocaleTimeString("it-IT", {
-    timeZone: "Europe/Rome",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-  return `${dateLabel} · ${timeLabel}`;
-}
 
 function eventSearchSource(event) {
   return `${countdownTitleWithEmoji(event)} ${countdownDateTokens(event.target_at)}`;
@@ -48,7 +31,7 @@ function filterEvents(events, query) {
 }
 
 function renderCard(event, isFeatured = false) {
-  const dateLabel = isMaturitaCountdownLocal(event) ? formatTargetDateTimeLocal(event.target_at) : formatTargetDate(event.target_at);
+  const dateLabel = isMaturitaCountdown(event) ? formatTargetDateTime(event.target_at) : formatTargetDate(event.target_at);
   return `
     <a href="${escapeHtml(buildCountdownUrl(event))}" class="block border-2 border-black ${isFeatured ? "bg-black text-white p-6 md:p-8" : "bg-white p-4"} shadow-brutal lift transition-all">
       <h3 class="${isFeatured ? "headline text-6xl mt-1" : "headline text-4xl mt-1"}">${escapeHtml(countdownTitleWithEmoji(event))}</h3>

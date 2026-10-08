@@ -1,4 +1,22 @@
-import { buildUniqueSlugMap, slugifyText } from "./slug-utils.js?v=20260303a";
+import { buildUniqueSlugMap, slugifyText } from "./slug-utils.js?v=20261006a";
+
+export function normalizeAgendaDateInput(value, { keepRaw = false } = {}) {
+  if (!value) return "";
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const iso = raw.match(/^(\d{4}-\d{2}-\d{2})T/);
+  if (iso) return iso[1];
+  const dmy = raw.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+  return keepRaw ? raw : "";
+}
+
+export function agendaSortValue(value) {
+  const normalized = normalizeAgendaDateInput(value);
+  if (!normalized) return Number.POSITIVE_INFINITY;
+  const time = new Date(`${normalized}T00:00:00`).getTime();
+  return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+}
 
 export function slugifyAgendaTitle(title) {
   return slugifyText(title);

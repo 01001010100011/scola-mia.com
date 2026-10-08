@@ -1,4 +1,4 @@
-import { buildUniqueSlugMap, slugifyText } from "./slug-utils.js?v=20260303a";
+import { buildUniqueSlugMap, slugifyText } from "./slug-utils.js?v=20261006a";
 
 export function slugifyArticleTitle(title) {
   return slugifyText(title);

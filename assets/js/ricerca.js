@@ -6,13 +6,13 @@ import {
   getCountdownEvents,
   getPublishedArticles,
   queryMatches
-} from "./public-api.js?v=20260224e";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20261005a";
-import { formatTargetDate } from "./countdown-core.js?v=20261005a";
-import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20260224e";
-import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20260311a";
-import { buildAgendaSlugMap, buildAgendaUrl } from "./agenda-url.js?v=20260303a";
-import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
+} from "./public-api.js?v=20261006a";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji, onlyFutureEvents } from "./countdown-data.js?v=20261006a";
+import { formatTargetDate } from "./countdown-core.js?v=20261006a";
+import { escapeHtml, formatLocalDate } from "./supabase-client.js?v=20261006a";
+import { buildArticleSlugMap, buildArticleUrl } from "./article-url.js?v=20261006a";
+import { buildAgendaSlugMap, buildAgendaUrl, normalizeAgendaDateInput } from "./agenda-url.js?v=20261006a";
+import { buildCountdownUrl } from "./countdown-url.js?v=20261006a";
 
 const articleResultsEl = document.getElementById("articleResults");
 const agendaResultsEl = document.getElementById("agendaResults");
@@ -75,17 +75,6 @@ function focusSearchInputForMobile() {
   setTimeout(focusNow, 320);
 }
 
-function normalizeAgendaDateInput(value) {
-  if (!value) return "";
-  const raw = String(value).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  const iso = raw.match(/^(\d{4}-\d{2}-\d{2})T/);
-  if (iso) return iso[1];
-  const dmy = raw.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
-  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
-  return raw;
-}
-
 function render(query = "") {
   const q = query.trim();
 
@@ -123,7 +112,7 @@ function render(query = "") {
   agendaResultsEl.innerHTML = agendaResults.length
     ? agendaResults.map((item) => {
       const agendaUrl = escapeHtml(buildAgendaUrl(item, agendaSlugMap));
-      const dateLabel = formatLocalDate(normalizeAgendaDateInput(item.date)) || "Data non valida";
+      const dateLabel = formatLocalDate(normalizeAgendaDateInput(item.date, { keepRaw: true })) || "Data non valida";
       return `
         <a href="${agendaUrl}" class="block border-2 border-black bg-white p-4 shadow-brutal hover:-translate-y-0.5 transition-transform">
           <p class="text-xs font-bold uppercase text-accent">${escapeHtml(item.category)}</p>

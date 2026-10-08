@@ -1,8 +1,8 @@
-import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js?v=20260224e";
-import { buildAgendaSlugMap, getAgendaSlug } from "./agenda-url.js?v=20260303a";
-import { buildCountdownUrl } from "./countdown-url.js?v=20260303a";
-import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20260303c";
-import { ensureSiteSettingsRow, saveSiteSettings } from "./site-settings.js?v=20260312a";
+import { escapeHtml, formatLocalDate, supabase, toSlugSafeName } from "./supabase-client.js?v=20261006a";
+import { agendaSortValue, buildAgendaSlugMap, getAgendaSlug, normalizeAgendaDateInput } from "./agenda-url.js?v=20261006a";
+import { buildCountdownUrl } from "./countdown-url.js?v=20261006a";
+import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20261006a";
+import { ensureSiteSettingsRow, saveSiteSettings } from "./site-settings.js?v=20261006a";
 import { ensureCurrentUserIsAdmin } from "./admin-auth.js?v=20261006a";
 import { confirmDialog, showToast } from "./admin-ui.js?v=20261006a";
 import { normalizeAllArticleImages } from "./admin-photo-tools.js?v=20261006a";
@@ -106,24 +106,6 @@ function authErrorMessage(error) {
   if (raw.includes("network")) return "Errore di rete. Controlla connessione e riprova.";
   if (raw.includes("captcha")) return "Richiesta bloccata dal controllo di sicurezza (captcha).";
   return error?.message || "Errore durante l'accesso.";
-}
-
-function normalizeAgendaDateInput(value) {
-  if (!value) return "";
-  const raw = String(value).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  const iso = raw.match(/^(\d{4}-\d{2}-\d{2})T/);
-  if (iso) return iso[1];
-  const dmy = raw.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
-  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
-  return "";
-}
-
-function agendaSortValue(value) {
-  const normalized = normalizeAgendaDateInput(value);
-  if (!normalized) return Number.POSITIVE_INFINITY;
-  const time = new Date(`${normalized}T00:00:00`).getTime();
-  return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
 }
 
 function countdownSortValue(value) {

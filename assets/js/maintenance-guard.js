@@ -1,4 +1,4 @@
-import { getMaintenanceMode } from "./site-settings.js?v=20260312a";
+import { getMaintenanceMode } from "./site-settings.js?v=20261006a";
 
 const ALLOWED_PATHS = [
   "/manutenzione/",

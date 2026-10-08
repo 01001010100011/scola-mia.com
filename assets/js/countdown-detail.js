@@ -1,12 +1,14 @@
-import { getCountdownEventBySlug } from "./public-api.js?v=20260224e";
-import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js?v=20261005a";
+import { getCountdownEventBySlug } from "./public-api.js?v=20261006a";
+import { FALLBACK_COUNTDOWN_EVENTS, countdownTitleWithEmoji } from "./countdown-data.js?v=20261006a";
 import {
   formatTargetDate,
+  formatTargetDateTime,
   getExcludedDateKeysUpTo,
   getRemainingPartsFromMs,
   getRemainingTotalsFromMs,
-  getWorkingRemainingMs
-} from "./countdown-core.js?v=20261005a";
+  getWorkingRemainingMs,
+  isMaturitaCountdown
+} from "./countdown-core.js?v=20261006a";
 
 const titleEl = document.getElementById("countdownTitle");
 const targetEl = document.getElementById("countdownTarget");
@@ -29,23 +31,6 @@ let timer = null;
 let currentEvent = null;
 let workingModeEnabled = false;
 let workingExcludedDateKeys = new Set();
-
-function isMaturitaCountdownLocal(event) {
-  const slug = String(event?.slug || "").trim().toLowerCase();
-  return slug.startsWith("maturita-");
-}
-
-function formatTargetDateTimeLocal(targetAt) {
-  const date = new Date(targetAt);
-  if (Number.isNaN(date.getTime())) return formatTargetDate(targetAt);
-  const dateLabel = formatTargetDate(targetAt);
-  const timeLabel = date.toLocaleTimeString("it-IT", {
-    timeZone: "Europe/Rome",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-  return `${dateLabel} · ${timeLabel}`;
-}
 
 function setStatus(message = "") {
   if (!message) {
@@ -230,8 +215,8 @@ async function bootstrap() {
   currentEvent = event;
   workingExcludedDateKeys = getExcludedDateKeysUpTo(event.target_at);
   titleEl.textContent = countdownTitleWithEmoji(event);
-  targetEl.textContent = isMaturitaCountdownLocal(event)
-    ? formatTargetDateTimeLocal(event.target_at)
+  targetEl.textContent = isMaturitaCountdown(event)
+    ? formatTargetDateTime(event.target_at)
     : formatTargetDate(event.target_at);
   mountWorkingModeToggle(event);
   mountWorkingInfoPopover();

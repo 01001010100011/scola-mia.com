@@ -1,8 +1,8 @@
-import { getArticleById, getPublishedArticles } from "./public-api.js?v=20260224e";
-import { escapeHtml, formatLocalDate, supabase } from "./supabase-client.js?v=20260224e";
-import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20260311a";
-import { markdownToHtml } from "./markdown.js?v=20261005a";
-import { initRecreationTool, renderRecreationToolSection, shouldRenderRecreationTool } from "./recreation-tool.js?v=20260307c";
+import { getArticleById, getPublishedArticles } from "./public-api.js?v=20261006a";
+import { escapeHtml, formatLocalDate, supabase } from "./supabase-client.js?v=20261006a";
+import { buildArticleSlugMap, getArticleSlug } from "./article-url.js?v=20261006a";
+import { markdownToHtml } from "./markdown.js?v=20261006a";
+import { initRecreationTool, renderRecreationToolSection, shouldRenderRecreationTool } from "./recreation-tool.js?v=20261006a";
 
 const container = document.getElementById("articleContainer");
 const DOMAIN = "https://scola-mia.com";

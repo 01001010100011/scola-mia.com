@@ -1,5 +1,5 @@
-import { CONTACTS } from "./site-content.js?v=20260312a";
-import { getMaintenanceMode } from "./site-settings.js?v=20260312a";
+import { CONTACTS } from "./site-content.js?v=20261006a";
+import { getMaintenanceMode } from "./site-settings.js?v=20261006a";
 
 const modalRoot = document.getElementById("maintenanceContactsModal");
 const modalBackdrop = document.getElementById("maintenanceContactsBackdrop");

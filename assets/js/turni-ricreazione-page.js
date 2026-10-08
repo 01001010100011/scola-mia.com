@@ -1,4 +1,4 @@
-import { initRecreationTool, renderRecreationToolSection } from "./recreation-tool.js?v=20260307c";
+import { initRecreationTool, renderRecreationToolSection } from "./recreation-tool.js?v=20261006a";
 
 const container = document.getElementById("recreationStandaloneContainer");
 
