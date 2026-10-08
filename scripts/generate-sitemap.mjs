@@ -1,9 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { readSupabaseConfig, resolveDomain } from "./lib/site-config.mjs";
 
 const ROOT = process.cwd();
-const SUPABASE_CONFIG_PATH = path.join(ROOT, "assets", "js", "supabase-config.js");
-const DOMAIN_FALLBACK = "scola-mia.com";
 
 const STATIC_ROUTES = [
   { route: "archivio", changefreq: "daily", priority: "0.9" },
@@ -64,25 +63,6 @@ function xmlEscape(value) {
     .replaceAll("'", "&apos;");
 }
 
-async function resolveDomain() {
-  try {
-    const value = (await fs.readFile(path.join(ROOT, "CNAME"), "utf8")).trim();
-    return value || DOMAIN_FALLBACK;
-  } catch {
-    return DOMAIN_FALLBACK;
-  }
-}
-
-async function readSupabaseConfig() {
-  const source = await fs.readFile(SUPABASE_CONFIG_PATH, "utf8");
-  const urlMatch = source.match(/SUPABASE_URL\s*=\s*"([^"]+)"/);
-  const keyMatch = source.match(/SUPABASE_ANON_KEY\s*=\s*"([^"]+)"/);
-  if (!urlMatch?.[1] || !keyMatch?.[1]) {
-    throw new Error("Impossibile leggere SUPABASE_URL/SUPABASE_ANON_KEY da assets/js/supabase-config.js");
-  }
-  return { url: urlMatch[1], key: keyMatch[1] };
-}
-
 async function fetchRows({ url, key }, table, select, params = {}) {
   const endpoint = new URL(`${url}/rest/v1/${table}`);
   endpoint.searchParams.set("select", select);
@@ -126,21 +106,32 @@ async function buildSitemap() {
     entries.push(xmlEntry(url, lastmod, changefreq, priority));
   };
 
-  const indexStat = await fs.stat(path.join(ROOT, "index.html"));
-  pushEntry(`https://${domain}/`, formatDate(indexStat.mtime), "daily", "1.0");
-
-  for (const item of STATIC_ROUTES) {
-    const filePath = path.join(ROOT, item.route, "index.html");
-    const stat = await fs.stat(filePath);
-    pushEntry(`https://${domain}/${item.route}/`, formatDate(stat.mtime), item.changefreq, item.priority);
-  }
-
   const articles = await fetchRows(
     supabase,
     "articles",
     "id,title,created_at,updated_at",
     { published: "eq.true", order: "updated_at.desc" }
   );
+
+  // lastmod basato sul contenuto, non sull'mtime dei file: su CI il checkout
+  // imposta mtime=adesso, quindi usare fs.stat faceva cambiare il sitemap a
+  // ogni run (churn di commit ogni 30 minuti). La data del contenuto è stabile
+  // e cambia solo quando un articolo viene davvero aggiornato.
+  const contentLastmod = (() => {
+    let latest = 0;
+    for (const article of articles || []) {
+      const t = new Date(article.updated_at || article.created_at || 0).getTime() || 0;
+      if (t > latest) latest = t;
+    }
+    return formatDate(latest ? new Date(latest) : new Date());
+  })();
+
+  pushEntry(`https://${domain}/`, contentLastmod, "daily", "1.0");
+
+  for (const item of STATIC_ROUTES) {
+    pushEntry(`https://${domain}/${item.route}/`, contentLastmod, item.changefreq, item.priority);
+  }
+
   const articleSlugMap = buildUniqueSlugMap(articles || [], (x) => x.id, (x) => x.title);
   for (const article of articles || []) {
     const slug = articleSlugMap.get(String(article.id || ""));

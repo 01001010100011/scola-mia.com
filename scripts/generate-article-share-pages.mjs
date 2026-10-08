@@ -1,13 +1,12 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { readSupabaseConfig, resolveDomain } from "./lib/site-config.mjs";
 
 const ROOT = process.cwd();
-const SUPABASE_CONFIG_PATH = path.join(ROOT, "assets", "js", "supabase-config.js");
 const ARTICLE_TEMPLATE_PATH = path.join(ROOT, "article.html");
 const CANONICAL_OUTPUT_DIR = path.join(ROOT, "articoli");
 const LEGACY_OUTPUT_DIR = path.join(ROOT, "article");
 const OG_IMAGE_OUTPUT_DIR = path.join(ROOT, "assets", "social", "article-og");
-const DOMAIN_FALLBACK = "scola-mia.com";
 const DEFAULT_IMAGE = "https://scola-mia.com/assets/social/og-home.png";
 const UUID_PREFIX_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i;
 
@@ -70,25 +69,6 @@ function isNoindexSlug(slug) {
   return /\b(prova|test|preview)\b/i.test(String(slug || ""));
 }
 
-async function resolveDomain() {
-  try {
-    const value = (await fs.readFile(path.join(ROOT, "CNAME"), "utf8")).trim();
-    return value || DOMAIN_FALLBACK;
-  } catch {
-    return DOMAIN_FALLBACK;
-  }
-}
-
-async function readSupabaseConfig() {
-  const source = await fs.readFile(SUPABASE_CONFIG_PATH, "utf8");
-  const urlMatch = source.match(/SUPABASE_URL\s*=\s*"([^"]+)"/);
-  const keyMatch = source.match(/SUPABASE_ANON_KEY\s*=\s*"([^"]+)"/);
-  if (!urlMatch?.[1] || !keyMatch?.[1]) {
-    throw new Error("Impossibile leggere SUPABASE_URL/SUPABASE_ANON_KEY da assets/js/supabase-config.js");
-  }
-  return { url: urlMatch[1], key: keyMatch[1] };
-}
-
 async function fetchPublishedArticles({ url, key }) {
   const endpoint = new URL(`${url}/rest/v1/articles`);
   endpoint.searchParams.set("select", "id,title,excerpt,image_url,published,created_at,updated_at");
@@ -120,11 +100,16 @@ async function prepareOgImageDirectory() {
   }
 }
 
-async function prepareCanonicalOutputDirectory() {
+async function prepareCanonicalOutputDirectory(validUuidDirs) {
   await fs.mkdir(CANONICAL_OUTPUT_DIR, { recursive: true });
   const current = await fs.readdir(CANONICAL_OUTPUT_DIR, { withFileTypes: true });
   for (const entry of current) {
-    if (entry.isDirectory() && !UUID_PREFIX_RE.test(entry.name)) {
+    if (!entry.isDirectory()) continue;
+    const isUuidDir = UUID_PREFIX_RE.test(entry.name);
+    // Le cartelle non-UUID sono gli slug canonici: vengono rigenerate sotto.
+    // Le cartelle UUID sono i redirect legacy: vanno eliminate solo se orfane
+    // (articolo cancellato o slug cambiato), altrimenti il repo accumula residui.
+    if (!isUuidDir || !validUuidDirs.has(entry.name)) {
       await fs.rm(path.join(CANONICAL_OUTPUT_DIR, entry.name), { recursive: true, force: true });
     }
   }
@@ -292,13 +277,17 @@ async function main() {
   const slugById = buildUniqueArticleSlugs(articles);
   const articleTemplate = await fs.readFile(ARTICLE_TEMPLATE_PATH, "utf8");
 
+  const slugFor = (article) =>
+    slugById.get(article.id) || slugifyArticleTitle(article.title) || "articolo";
+  const validUuidDirs = new Set(articles.map((article) => `${article.id}-${slugFor(article)}`));
+
   await prepareOgImageDirectory();
-  await prepareCanonicalOutputDirectory();
+  await prepareCanonicalOutputDirectory(validUuidDirs);
   await prepareLegacyOutputDirectory();
   await writeArticlesRootRedirect(domain);
 
   for (const article of articles) {
-    const slug = slugById.get(article.id) || slugifyArticleTitle(article.title) || "articolo";
+    const slug = slugFor(article);
     const canonicalUrl = `https://${domain}/articoli/${slug}/`;
     const legacyUrl = `https://${domain}/article/${slug}/`;
     const imageUrl = await mirrorArticleImageForOg({ sourceUrl: article.image_url, slug, domain });
