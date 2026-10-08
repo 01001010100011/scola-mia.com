@@ -34,22 +34,20 @@
         const legacyArticleMatch = path.match(/^\/articoli\/([^/]+)\/?$/);
         if (legacyArticleMatch) {
           const raw = decodeURIComponent(legacyArticleMatch[1] || "");
-          const id = raw.split("-")[0];
-          if (/^[0-9a-fA-F-]{36}$/.test(id)) {
-            const slug = raw.slice(id.length + 1);
-            if (slug) {
-              window.location.replace(`/articoli/${encodeURIComponent(slug)}/`);
-              return;
-            }
-            return;
-          }
-          // Slug semplice la cui pagina statica non è ancora stata generata:
-          // invece di mostrare il 404, passa al renderer dinamico (article.js
-          // legge ?slug= e recupera l'articolo da Supabase). È lo stesso
-          // pattern già usato sotto per countdown e agenda. Rende ogni articolo
-          // appena pubblicato subito accessibile, senza attendere la CI.
-          if (raw) {
-            window.location.replace(`/article/?slug=${encodeURIComponent(raw)}`);
+          // Rimuove l'eventuale prefisso UUID legacy (<uuid>-<slug>). La vecchia
+          // verifica usava raw.split("-")[0] che non è mai un UUID completo,
+          // quindi quel ramo non scattava: qui il match è sull'UUID intero.
+          const uuidPrefix = raw.match(
+            /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}-/
+          );
+          const slug = uuidPrefix ? raw.slice(uuidPrefix[0].length) : raw;
+          // Pagina statica non ancora generata: passa al renderer dinamico.
+          // article.js legge ?slug= e recupera l'articolo da Supabase, poi
+          // riporta l'URL al canonico /articoli/<slug>/. È lo stesso pattern
+          // usato sotto per countdown e agenda: rende ogni articolo appena
+          // pubblicato subito accessibile, senza attendere la generazione CI.
+          if (slug) {
+            window.location.replace(`/article/?slug=${encodeURIComponent(slug)}`);
             return;
           }
         }
